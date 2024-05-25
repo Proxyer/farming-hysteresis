@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using RimWorld;
@@ -20,14 +19,14 @@ namespace FarmingHysteresis
             SomethingElse,
         }
 
-        private List<TabRecord> tabs = new List<TabRecord>();
+        private readonly List<TabRecord> tabs = [];
 
         private static HysteresisTab currentTab = HysteresisTab.HysteresisValues;
 
-        private Dictionary<ThingDef, IBoundedValueAccessor> globalBoundAccessors = new Dictionary<ThingDef, IBoundedValueAccessor>();
-        private Dictionary<ThingDef, BoundValues> globalBounds = new();
-        private Dictionary<ThingDef, string?> globalBoundLowerBuffers = new();
-        private Dictionary<ThingDef, string?> globalBoundUpperBuffers = new();
+        private readonly Dictionary<ThingDef, IBoundedValueAccessor> globalBoundAccessors = [];
+        private readonly Dictionary<ThingDef, BoundValues> globalBounds = [];
+        private readonly Dictionary<ThingDef, string?> globalBoundLowerBuffers = [];
+        private readonly Dictionary<ThingDef, string?> globalBoundUpperBuffers = [];
 
         public override void PreOpen()
         {
@@ -82,13 +81,33 @@ namespace FarmingHysteresis
         private Vector2 messagesScrollPos;
         private float scrollViewHeight;
 
-        private void DoHysteresisValuesPage(Rect rect2)
+
+        private readonly QuickSearchWidget _quickSearch = new();
+        private List<ThingDef>? _filteredHarvestedThingDefs = null;
+
+        private void UpdateFilter()
         {
-            Rect viewRect = new Rect(0f, 0f, rect2.width - 16f, scrollViewHeight);
-            Widgets.BeginScrollView(rect2, ref messagesScrollPos, viewRect);
+            _filteredHarvestedThingDefs = globalBoundAccessors.Keys.Where(h => h.label.Contains(_quickSearch.filter.Text)).ToList();
+            _quickSearch.noResultsMatched = _filteredHarvestedThingDefs.Count == 0;
+        }
+
+        private void DoHysteresisValuesPage(Rect tabRect)
+        {
+            if (_filteredHarvestedThingDefs == null)
+            {
+                UpdateFilter();
+            }
+
+            Rect quickSearchRect = new(tabRect.x + 3f, tabRect.y + 5f, tabRect.width - 16f - 6f, 24f);
+            _quickSearch.OnGUI(quickSearchRect, () => UpdateFilter());
+
+            Rect listRect = new(tabRect.x, quickSearchRect.yMax + 5f, tabRect.width, tabRect.height - quickSearchRect.height - 5f);
+
+            Rect viewRect = new(0f, 0f, tabRect.width - 16f, scrollViewHeight);
+            Widgets.BeginScrollView(listRect, ref messagesScrollPos, viewRect);
 
             float num = 0f;
-            foreach (ThingDef harvestedThingDef in globalBoundAccessors.Keys)
+            foreach (ThingDef harvestedThingDef in _filteredHarvestedThingDefs!)
             {
                 var value = globalBounds[harvestedThingDef].Lower;
                 var buffer = globalBoundLowerBuffers[harvestedThingDef];
@@ -112,9 +131,9 @@ namespace FarmingHysteresis
 
         private float DrawPlantRow(ThingDef harvest, float rowY, Rect fillRect)
         {
-            Rect rowRect = new Rect(0f, rowY, fillRect.width, PLANT_ROW_HEIGHT);
-            Rect labelRect = new Rect(90f, rowY, 250f, PLANT_ROW_HEIGHT);
-            Rect plantIconRect = new Rect(24f, rowY + 3f, 42f, 42f);
+            Rect rowRect = new(0f, rowY, fillRect.width, PLANT_ROW_HEIGHT);
+            Rect labelRect = new(90f, rowY, 250f, PLANT_ROW_HEIGHT);
+            Rect plantIconRect = new(24f, rowY + 3f, 42f, 42f);
 
             GUI.color = new Color(1f, 1f, 1f, 0.5f);
             Widgets.DrawHighlightIfMouseover(rowRect);
@@ -140,12 +159,12 @@ namespace FarmingHysteresis
 
             if (Mouse.IsOver(harvestIconRect))
             {
-                TipSignal tip = new TipSignal(harvestDef.LabelCap.Colorize(ColoredText.TipSectionTitleColor) + "\n\n" + harvestDef.description);
+                TipSignal tip = new(harvestDef.LabelCap.Colorize(ColoredText.TipSectionTitleColor) + "\n\n" + harvestDef.description);
                 TooltipHandler.TipRegion(harvestIconRect, tip);
             }
             if (Mouse.IsOver(harvestLabelRect))
             {
-                TipSignal tip = new TipSignal(harvestDef.LabelCap.Colorize(ColoredText.TipSectionTitleColor) + "\n\n" + harvestDef.description);
+                TipSignal tip = new(harvestDef.LabelCap.Colorize(ColoredText.TipSectionTitleColor) + "\n\n" + harvestDef.description);
                 TooltipHandler.TipRegion(harvestLabelRect, tip);
             }
 
