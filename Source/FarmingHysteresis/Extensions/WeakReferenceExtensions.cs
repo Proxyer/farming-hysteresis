@@ -1,8 +1,6 @@
-using System;
-
 internal static class WeakReferenceExtensions
 {
-    public static T GetTargetOrThrow<T>(this WeakReference<T> weakReference)
+    public static T GetTargetOrThrow<T>(this System.WeakReference<T> weakReference)
         where T : class
     {
         if (weakReference.TryGetTarget(out var target))

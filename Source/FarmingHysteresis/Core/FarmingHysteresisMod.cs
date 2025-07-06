@@ -1,67 +1,57 @@
-﻿using HarmonyLib;
-using Verse;
-using UnityEngine;
-using System;
+using System.Reflection;
 using System.Runtime.CompilerServices;
 
 [assembly: InternalsVisibleTo("FarmingHysteresis.VanillaPlantsExpandedMorePlants")]
 
-namespace FarmingHysteresis
+namespace FarmingHysteresis;
+
+public class FarmingHysteresisMod : IlyvionMod
 {
-    public class FarmingHysteresisMod : Mod
+#pragma warning disable CS8618 // Set by constructor
+    private static FarmingHysteresisMod _instance;
+    public static FarmingHysteresisMod Instance
     {
-        private readonly ModContentPack content;
+        get => _instance;
+        private set => _instance = value;
+    }
+#pragma warning restore CS8618
 
-        public FarmingHysteresisMod(ModContentPack content) : base(content)
+    public FarmingHysteresisMod(ModContentPack content) : base(content)
+    {
+        // This is kind of stupid, but also kind of correct. Correct wins.
+        if (content == null)
         {
-            this.content = content;
-
-            new Harmony(Constants.Id).PatchAll();
-
-            GetSettings<Settings>();
+            throw new ArgumentNullException(nameof(content));
         }
 
-        public override void DoSettingsWindowContents(Rect inRect)
-        {
-            base.DoSettingsWindowContents(inRect);
-            Settings.DoSettingsWindowContents(inRect);
-        }
+        Instance = this;
 
-        public override string SettingsCategory()
-        {
-            return content.Name;
-        }
+        // apply fixes
+        var harmony = new Harmony(content.PackageId);
+        //Harmony.DEBUG = true;
+        harmony.PatchAll(Assembly.GetExecutingAssembly());
+        //Harmony.DEBUG = false;
 
-        public static void Message(string msg)
+        LongEventHandler.ExecuteWhenFinished(() =>
         {
-            Log.Message("[Farming Hysteresis] " + msg);
-        }
+            // We need to load settings here at the latest because if we end up waiting until during
+            //  a game load, it leads to the ScribeLoader exception
+            // "Called InitLoading() but current mode is LoadingVars"
+            // because you can't Scribe multiple things at once.
+            _ = Settings;
+        });
+    }
 
-        public static void Dev(string msg)
-        {
-            if (Prefs.DevMode)
-            {
-                Log.Message("[Farming Hysteresis][DEV] " + msg);
-            }
-        }
+    protected override bool HasSettings => true;
+    public static Settings Settings => Instance.GetSettings<Settings>();
 
-        public static void Warning(string msg)
-        {
-            Log.Warning("[Farming Hysteresis] " + msg);
-        }
+    public override void DoSettingsWindowContents(Rect inRect)
+    {
+        Settings.DoSettingsWindowContents(inRect);
+    }
 
-        public static void Error(string msg)
-        {
-            Log.Error("[Farming Hysteresis] " + msg);
-        }
-
-        public static void Exception(string msg, Exception? e = null)
-        {
-            Message(msg);
-            if (e != null)
-            {
-                Log.Error(e.ToString());
-            }
-        }
+    public override string SettingsCategory()
+    {
+        return Content.Name;
     }
 }

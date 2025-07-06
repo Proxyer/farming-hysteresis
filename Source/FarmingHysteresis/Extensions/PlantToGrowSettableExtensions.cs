@@ -1,9 +1,5 @@
-using System;
-using System.Linq;
 using System.Runtime.CompilerServices;
 using FarmingHysteresis.Defs;
-using RimWorld;
-using Verse;
 
 namespace FarmingHysteresis.Extensions;
 
@@ -29,7 +25,7 @@ internal static class PlantToGrowSettableExtensions
         if (harvestedThingDef != null)
         {
             int harvestedThingCount;
-            if (Settings.CountAllOnMap)
+            if (FarmingHysteresisMod.Settings.CountAllOnMap)
             {
                 harvestedThingCount = plantToGrowSettable.Map.listerThings.ThingsOfDef(harvestedThingDef)
                     .Where(t => !t.IsForbidden(Faction.OfPlayer) && !t.Position.Fogged(plantToGrowSettable.Map))
@@ -51,8 +47,8 @@ internal static class PlantToGrowSettableExtensions
     {
         var def = GetControlDefForPlantGrower(plantGrower, nameof(SetHysteresisControlState));
 
-        def.SetAllowSow(plantGrower, !Settings.ControlSowing || state);
-        def.SetAllowHarvest(plantGrower, !Settings.ControlHarvesting || state);
+        def.SetAllowSow(plantGrower, !FarmingHysteresisMod.Settings.ControlSowing || state);
+        def.SetAllowHarvest(plantGrower, !FarmingHysteresisMod.Settings.ControlHarvesting || state);
     }
 
     private static void ThrowError(IPlantToGrowSettable plantGrower, string method)

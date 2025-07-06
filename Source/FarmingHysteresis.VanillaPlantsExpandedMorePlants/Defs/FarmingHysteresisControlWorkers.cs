@@ -1,13 +1,13 @@
-using System.Collections.Generic;
-using System.Linq;
 using FarmingHysteresis.Defs;
-using RimWorld;
 using VanillaPlantsExpandedMorePlants;
-using Verse;
 
 namespace FarmingHysteresis.VanillaPlantsExpandedMorePlants.Defs;
 
-internal class FarmingHysteresisControlWorker_Zone_GrowingAquatic : FarmingHysteresisControlWorker
+[System.Diagnostics.CodeAnalysis.SuppressMessage(
+    "Microsoft.Performance",
+    "CA1812:AvoidUninstantiatedInternalClasses",
+    Justification = "Class is instantiated via reflection")]
+internal sealed class FarmingHysteresisControlWorker_Zone_GrowingAquatic : FarmingHysteresisControlWorker
 {
     public override IEnumerable<IPlantToGrowSettable> GetControlledPlantGrowers(Map map) =>
         map.zoneManager.AllZones.OfType<Zone_GrowingAquatic>();
@@ -25,7 +25,11 @@ internal class FarmingHysteresisControlWorker_Zone_GrowingAquatic : FarmingHyste
     }
 }
 
-internal class FarmingHysteresisControlWorker_Zone_GrowingSandy : FarmingHysteresisControlWorker
+[System.Diagnostics.CodeAnalysis.SuppressMessage(
+    "Microsoft.Performance",
+    "CA1812:AvoidUninstantiatedInternalClasses",
+    Justification = "Class is instantiated via reflection")]
+internal sealed class FarmingHysteresisControlWorker_Zone_GrowingSandy : FarmingHysteresisControlWorker
 {
     public override IEnumerable<IPlantToGrowSettable> GetControlledPlantGrowers(Map map) =>
         map.zoneManager.AllZones.OfType<Zone_GrowingSandy>();
