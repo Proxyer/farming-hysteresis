@@ -9,6 +9,7 @@ export RimWorldSteamWorkshopFolderPath="../../.deps/refs"
 mkdir -p .savedatafolder/1.6
 mkdir -p .savedatafolder/1.5
 mkdir -p .savedatafolder/1.4
+mkdir -p .savedatafolder/1.3
 
 # build dlls
 export RimWorldVersion="1.3"
@@ -18,8 +19,7 @@ dotnet build --configuration "$CONFIGURATION" FarmingHysteresis.sln
 export RimWorldVersion="1.5"
 dotnet build --configuration "$CONFIGURATION" FarmingHysteresis.sln
 export RimWorldVersion="1.6"
-#dotnet build --configuration "$CONFIGURATION" FarmingHysteresis.sln
-dotnet build --configuration "$CONFIGURATION" Source/FarmingHysteresis/FarmingHysteresis.csproj
+dotnet build --configuration "$CONFIGURATION" FarmingHysteresis.sln
 
 # remove mod folder
 rm -rf "$TARGET"
@@ -35,7 +35,7 @@ cp -r 1.6 "$TARGET/1.6"
 cp -r "1.3_VanillaPlantsExpandedMorePlants" "$TARGET/1.3_VanillaPlantsExpandedMorePlants"
 cp -r "1.4_VanillaPlantsExpandedMorePlants" "$TARGET/1.4_VanillaPlantsExpandedMorePlants"
 cp -r "1.5_VanillaPlantsExpandedMorePlants" "$TARGET/1.5_VanillaPlantsExpandedMorePlants"
-# cp -r "1.6_VanillaPlantsExpandedMorePlants" "$TARGET/1.6_VanillaPlantsExpandedMorePlants"
+cp -r "1.6_VanillaPlantsExpandedMorePlants" "$TARGET/1.6_VanillaPlantsExpandedMorePlants"
 cp -r Common "$TARGET/Common"
 
 rsync -av --exclude='*.pdn' --exclude='*.svg' --exclude='*.ttf' About "$TARGET/"
