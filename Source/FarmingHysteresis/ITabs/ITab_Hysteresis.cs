@@ -168,7 +168,12 @@ internal class ITab_Hysteresis : ITab
         _ = listingStandard.Label(labelTranslationKey.Translate());
         listingStandard.IntEntry(ref bound, ref buffer);
         _ = listingStandard.Label(
-            descTranslationKey.Translate(plant.label, dataBound, harvestedThingDef.label, HysteresisModeString)
+            descTranslationKey.Translate(
+                plant.label,
+                dataBound,
+                harvestedThingDef.label,
+                HysteresisModeString
+            )
         );
 
         if (bound != dataBound)

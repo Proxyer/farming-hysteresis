@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Plant pots (and any other grower that can only ever grow purely decorative plants) are no longer offered by CMR-managed hysteresis's 'All growers'/area selection, since they can never produce anything for hysteresis to track.
+
 ## [0.10.0] - 2026-07-22
 
 ### Added

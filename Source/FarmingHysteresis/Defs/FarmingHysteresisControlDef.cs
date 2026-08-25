@@ -30,7 +30,10 @@ public class FarmingHysteresisControlDef : Def
     /// <see cref="FarmingHysteresisControlDef"/>s. Each grower is attributed to exactly one def -
     /// its most specific controller as resolved by <see cref="PlantToGrowSettableExtensions.ResolveControlDef"/>
     /// - so a grower whose concrete type is also matched (via inheritance) by a broader def's
-    /// worker isn't double-enumerated.
+    /// worker isn't double-enumerated. Growers that can never grow a plant with a harvested item
+    /// (e.g. plant pots, restricted to purely decorative plants - see
+    /// <see cref="PlantToGrowSettableExtensions.CanEverYieldHarvest"/>) are excluded entirely,
+    /// since there's nothing for hysteresis to ever track for them.
     /// </summary>
     /// <param name="map">The map to search.</param>
     public static IEnumerable<IPlantToGrowSettable> AllControlledPlantGrowers(Map map)
@@ -39,6 +42,7 @@ public class FarmingHysteresisControlDef : Def
         return allDefs.SelectMany(d =>
             d.Worker.GetControlledPlantGrowers(map)
                 .Where(g => IsMostSpecificControllerFor(allDefs, g.GetType(), d))
+                .Where(g => g.CanEverYieldHarvest())
         );
     }
 

@@ -14,6 +14,45 @@ internal static class PlantToGrowSettableExtensions
 
     private static readonly Dictionary<Type, FarmingHysteresisControlDef> controlDefCache = [];
 
+    private static readonly Dictionary<object, bool> canEverYieldHarvestCache = [];
+
+    /// <summary>
+    /// Cache key for <see cref="CanEverYieldHarvest"/>: <see cref="PlantUtility.CanSowOnGrower"/>
+    /// decides sowability from a <see cref="Thing"/> grower's own <see cref="ThingDef"/> (e.g.
+    /// plant pots vs. hydroponics basins have different <c>sowTag</c>s despite sharing a C#
+    /// type), so those key by <see cref="ThingDef"/> rather than by <see cref="Type"/>. Non-<see
+    /// cref="Thing"/> growers (zones and any other <see cref="IPlantToGrowSettable"/>
+    /// implementation) key by their concrete <see cref="Type"/> instead.
+    /// </summary>
+    private static object CanEverYieldHarvestCacheKey(IPlantToGrowSettable grower) =>
+        grower is Thing thing ? thing.def : grower.GetType();
+
+    /// <summary>
+    /// Whether <paramref name="grower"/> can ever grow a plant that produces a harvested item -
+    /// false for growers restricted (by <c>sowTag</c>) to purely decorative plants, such as plant
+    /// pots. Depends only on <paramref name="grower"/>'s def/type (via <see
+    /// cref="PlantUtility.ValidPlantTypesForGrowers"/>), never on its current state, so the result
+    /// is cached per <see cref="CanEverYieldHarvestCacheKey"/> rather than recomputed on every
+    /// call.
+    /// </summary>
+    internal static bool CanEverYieldHarvest(this IPlantToGrowSettable grower)
+    {
+        var key = CanEverYieldHarvestCacheKey(grower);
+        if (canEverYieldHarvestCache.TryGetValue(key, out var cached))
+        {
+            return cached;
+        }
+
+        var result = ComputeCanEverYieldHarvest(PlantUtility.ValidPlantTypesForGrowers([grower]));
+        canEverYieldHarvestCache[key] = result;
+        return result;
+    }
+
+    /// <summary>Pure decision logic behind <see cref="CanEverYieldHarvest"/>: whether any of <paramref name="validPlantTypesForGrower"/> produces a harvested item.</summary>
+    internal static bool ComputeCanEverYieldHarvest(
+        IEnumerable<ThingDef> validPlantTypesForGrower
+    ) => validPlantTypesForGrower.Any(plantDef => plantDef.plant?.harvestedThingDef != null);
+
     /// <summary>Pure lookup logic behind <see cref="GetControlDefForPlantGrower"/>'s def resolution: an exact <see cref="FarmingHysteresisControlDef.controlledClass"/> match wins, falling back to the first def whose <c>controlledClass</c> is assignable from <paramref name="type"/>. If more than one def claims the same <c>controlledClass</c>, this arbitrarily picks the first rather than throwing; <see cref="FarmingHysteresisControlDef.ConfigErrors"/> is what surfaces that collision to the modder.</summary>
     internal static FarmingHysteresisControlDef? ResolveControlDef(
         IEnumerable<FarmingHysteresisControlDef> defs,
