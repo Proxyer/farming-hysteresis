@@ -28,6 +28,38 @@ internal static class PlantToGrowSettableExtensionsComputeAllowTests
             .That(PlantToGrowSettableExtensions.ComputeAllowSow(controlSowing: false, state: false))
             .Is.True();
 
+    // A registered soft-dependency veto (e.g. Smart Farming's "No petty jobs") can only ever turn
+    // sowing off, never force it on over hysteresis's own decision.
+    [Test]
+    public static void VetoOverridesAnOtherwiseAllowedSow() =>
+        Assert
+            .That(
+                PlantToGrowSettableExtensions.ComputeAllowSow(
+                    controlSowing: true,
+                    state: true,
+                    vetoAllowsSow: false
+                )
+            )
+            .Is.False();
+
+    [Test]
+    public static void VetoCannotForceSowOnWhenHysteresisWouldDisallowIt() =>
+        Assert
+            .That(
+                PlantToGrowSettableExtensions.ComputeAllowSow(
+                    controlSowing: true,
+                    state: false,
+                    vetoAllowsSow: true
+                )
+            )
+            .Is.False();
+
+    [Test]
+    public static void NoVetoRegisteredDefaultsToNoVeto() =>
+        Assert
+            .That(PlantToGrowSettableExtensions.ComputeAllowSow(controlSowing: true, state: true))
+            .Is.True();
+
     [Test]
     public static void HarvestFollowsStateWheneverHarvestingIsControlledAndNotForced()
     {

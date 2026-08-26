@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Farming Hysteresis now cooperates with Smart Farming's 'No petty jobs' zone setting instead of fighting over it: a zone with 'No petty jobs' turned on keeps deferring to Smart Farming's own sowing decision, whichever hysteresis engine (legacy or Colony Manager Redux) controls it.
+
 ## [0.11.0] - 2026-08-26
 
 ### Added

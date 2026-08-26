@@ -613,6 +613,82 @@ internal sealed class ManagerJob_FarmingHysteresis
 
     public override void CleanUp(ManagerLog? jobLog = null) { }
 
+    /// <summary>
+    /// How often <see cref="Tick"/> reasserts sow/harvest state, in game ticks - matches
+    /// <c>DefaultHysteresisController</c>'s own per-tick cadence for the legacy engine, so a
+    /// soft-dependency veto (e.g. Smart Farming's "No petty jobs" - see
+    /// <see cref="FarmingHysteresisMod.AllowSowVeto"/>) gets reasserted this often too, rather
+    /// than waiting for this job's own (potentially much less frequent) work cycle.
+    /// </summary>
+    private const int TickInterval = 250;
+
+    /// <summary>
+    /// Recomputes whether <paramref name="grower"/> has a not-yet-transitioned leftover plant from
+    /// a previous rotation entry (see <see cref="GrowerHasLeftoverPlants"/>), clears it immediately
+    /// if <paramref name="switchMode"/> calls for that, then reapplies this job's current
+    /// hysteresis latch state (<see cref="Trigger_Hysteresis.State"/>) to
+    /// <paramref name="grower"/>'s allow-sow/allow-harvest gating via
+    /// <see cref="PlantToGrowSettableExtensions.SetHysteresisControlState"/> - which also consults
+    /// FH core's <see cref="FarmingHysteresisMod.AllowSowVeto"/> hook, so a soft-dependency veto is
+    /// applied here too. Shared by <see cref="ExecuteJobDataCoroutine"/> (once per job cycle) and
+    /// <see cref="Tick"/> (every <see cref="TickInterval"/> ticks) so a veto doesn't have to wait
+    /// for the next job cycle to take effect.
+    /// </summary>
+    private void ReassertSowState(
+        IPlantToGrowSettable grower,
+        ThingDef targetPlantDef,
+        HashSet<ThingDef> rotationPlantDefs,
+        RotationSwitchMode switchMode
+    )
+    {
+        var hasLeftoverPlants = GrowerHasLeftoverPlants(
+            grower.Cells.Select(c => c.GetPlant(grower.Map)?.def),
+            targetPlantDef,
+            rotationPlantDefs
+        );
+        if (hasLeftoverPlants && switchMode == RotationSwitchMode.SwitchImmediately)
+        {
+            ForceClearLeftoverPlants(grower, targetPlantDef);
+        }
+
+        grower.SetHysteresisControlState(
+            HysteresisMode,
+            HysteresisTrigger.State,
+            forceHarvestEnabled: hasLeftoverPlants
+        );
+    }
+
+    /// <summary>
+    /// Reasserts this job's current hysteresis latch state onto every managed grower every
+    /// <see cref="TickInterval"/> ticks (see <see cref="ReassertSowState"/>) - independent of this
+    /// job's own work-cycle cadence, which can otherwise be far less frequent. A no-op while this
+    /// job is dormant (<see cref="IsManaged"/> false, e.g. the legacy engine is the active
+    /// controller instead) or before a target plant has been chosen.
+    /// </summary>
+    public override void Tick()
+    {
+        if (!IsManaged || Find.TickManager.TicksGame % TickInterval != 0)
+        {
+            return;
+        }
+
+        var targetPlantDef = TargetPlantDef;
+        if (targetPlantDef == null)
+        {
+            return;
+        }
+
+        HashSet<ThingDef> rotationPlantDefs =
+        [
+            .. RotationEntries.Select(e => e.PlantDef).OfType<ThingDef>(),
+        ];
+
+        foreach (var grower in ManagedGrowers)
+        {
+            ReassertSowState(grower, targetPlantDef, rotationPlantDefs, SwitchMode);
+        }
+    }
+
     protected override Coroutine GatherJobDataCoroutine(ManagerLog jobLog, AnyBoxed<WorkData?> data)
     {
         var growers = ManagedGrowers;
@@ -733,16 +809,6 @@ internal sealed class ManagerJob_FarmingHysteresis
                 );
             }
 
-            var hasLeftoverPlants = GrowerHasLeftoverPlants(
-                grower.Cells.Select(c => c.GetPlant(grower.Map)?.def),
-                targetPlantDef,
-                rotationPlantDefs
-            );
-            if (hasLeftoverPlants && data.SwitchMode == RotationSwitchMode.SwitchImmediately)
-            {
-                ForceClearLeftoverPlants(grower, targetPlantDef);
-            }
-
             var beforeSow = grower.GetAllowSow();
             var beforeHarvest = grower.GetAllowHarvest();
 
@@ -757,11 +823,7 @@ internal sealed class ManagerJob_FarmingHysteresis
             // CmrHysteresisController.ShouldProtectLeftoverFromCut (checked by
             // WorkGiver_GrowerSow_JobOnCell) rather than by disallowing sow on the whole grower -
             // that would also block sowing into cells that are already clear.
-            grower.SetHysteresisControlState(
-                HysteresisMode,
-                enabled,
-                forceHarvestEnabled: hasLeftoverPlants
-            );
+            ReassertSowState(grower, targetPlantDef, rotationPlantDefs, data.SwitchMode);
 
             if (grower.GetAllowSow() != beforeSow || grower.GetAllowHarvest() != beforeHarvest)
             {

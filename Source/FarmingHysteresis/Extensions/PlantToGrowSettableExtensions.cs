@@ -136,15 +136,25 @@ internal static class PlantToGrowSettableExtensions
     {
         var def = GetControlDefForPlantGrower(plantGrower, nameof(SetHysteresisControlState));
 
-        def.SetAllowSow(plantGrower, ComputeAllowSow(mode.ControlsSowing(), state));
+        var vetoAllowsSow = FarmingHysteresisMod.AllowSowVeto?.Invoke(plantGrower) ?? true;
+        def.SetAllowSow(plantGrower, ComputeAllowSow(mode.ControlsSowing(), state, vetoAllowsSow));
         def.SetAllowHarvest(
             plantGrower,
             ComputeAllowHarvest(mode.ControlsHarvesting(), state, forceHarvestEnabled)
         );
     }
 
-    /// <summary>Pure decision logic behind <see cref="SetHysteresisControlState"/>'s sow gating.</summary>
-    internal static bool ComputeAllowSow(bool controlSowing, bool state) => !controlSowing || state;
+    /// <summary>
+    /// Pure decision logic behind <see cref="SetHysteresisControlState"/>'s sow gating.
+    /// <paramref name="vetoAllowsSow"/> is <see cref="FarmingHysteresisMod.AllowSowVeto"/>'s
+    /// result for this grower (true when no veto is registered or it doesn't apply) - ANDed in
+    /// last so a registered veto can only ever turn sowing off, never force it on.
+    /// </summary>
+    internal static bool ComputeAllowSow(
+        bool controlSowing,
+        bool state,
+        bool vetoAllowsSow = true
+    ) => (!controlSowing || state) && vetoAllowsSow;
 
     /// <summary>Pure decision logic behind <see cref="SetHysteresisControlState"/>'s harvest gating.</summary>
     internal static bool ComputeAllowHarvest(

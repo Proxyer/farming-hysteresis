@@ -1,5 +1,6 @@
 [assembly: InternalsVisibleTo("FarmingHysteresis.VanillaPlantsExpandedMorePlants")]
 [assembly: InternalsVisibleTo("FarmingHysteresis.ColonyManagerRedux")]
+[assembly: InternalsVisibleTo("FarmingHysteresis.SmartFarming")]
 
 namespace FarmingHysteresis;
 
@@ -61,6 +62,16 @@ public class FarmingHysteresisMod : IlyvionMod
     /// </summary>
     public static IHysteresisController HysteresisController { get; internal set; } =
         DefaultHysteresisController.Instance;
+
+    /// <summary>
+    /// Optional veto consulted by <see
+    /// cref="Extensions.PlantToGrowSettableExtensions.SetHysteresisControlState"/> (used by both
+    /// hysteresis engines) before enabling sowing on a grower - lets a soft-dependency
+    /// integration (e.g. the Smart Farming integration's "No petty jobs" cooperation) defer to
+    /// another mod's own sow decision for growers it manages. Returns <see langword="true"/> (no
+    /// veto) when nothing is registered.
+    /// </summary>
+    public static Func<IPlantToGrowSettable, bool>? AllowSowVeto { get; internal set; }
 
     /// <inheritdoc/>
     public override void DoSettingsWindowContents(Rect inRect) =>

@@ -6,6 +6,7 @@
             >Integrations/VanillaPlantsExpandedMorePlants/Common</li>
         <li IfModActive="VanillaExpanded.VPlantsEMore"
             >Integrations/VanillaPlantsExpandedMorePlants/1.3</li>
+        <li IfModActive="Owlchemist.SmartFarming">Integrations/SmartFarming/1.3</li>
     </v1.3>
     <v1.4>
         <li>Common</li>
@@ -14,6 +15,7 @@
             >Integrations/VanillaPlantsExpandedMorePlants/Common</li>
         <li IfModActive="VanillaExpanded.VPlantsEMore"
             >Integrations/VanillaPlantsExpandedMorePlants/1.4</li>
+        <li IfModActive="Owlchemist.SmartFarming">Integrations/SmartFarming/1.4</li>
     </v1.4>
     <v1.5>
         <li>Common</li>
@@ -28,6 +30,7 @@
             >Integrations/VanillaExpandedFramework/Common</li>
         <li IfModActive="OskarPotocki.VanillaFactionsExpanded.Core"
             >Integrations/VanillaExpandedFramework/1.5</li>
+        <li IfModActive="Owlchemist.SmartFarming">Integrations/SmartFarming/1.5</li>
     </v1.5>
     <v1.6>
         <li>Common</li>
@@ -42,5 +45,6 @@
             >Integrations/VanillaExpandedFramework/Common</li>
         <li IfModActive="OskarPotocki.VanillaFactionsExpanded.Core"
             >Integrations/VanillaExpandedFramework/1.6</li>
+        <li IfModActive="Owlchemist.SmartFarming">Integrations/SmartFarming/1.6</li>
     </v1.6>
 </loadFolders>
