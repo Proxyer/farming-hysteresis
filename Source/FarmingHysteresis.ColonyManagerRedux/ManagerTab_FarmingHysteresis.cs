@@ -697,6 +697,16 @@ internal sealed class ManagerTab_FarmingHysteresis(Manager manager)
             : null;
     }
 
+    /// <summary>
+    /// The "Add first…"/"Add additional…" wording distinction exists because a player with no
+    /// rotation entries yet read "additional" as implying one already existed and couldn't find
+    /// how to configure it.
+    /// </summary>
+    internal static string AddCropButtonLabelKey(int currentRotationEntryCount) =>
+        currentRotationEntryCount == 0
+            ? "FarmingHysteresis.CMR.CropRotation.AddFirstCrop"
+            : "FarmingHysteresis.CMR.CropRotation.AddCrop";
+
     private static float DrawAddCropButton(
         ManagerJob_FarmingHysteresis job,
         List<ThingDef> validTargetPlants,
@@ -713,9 +723,8 @@ internal sealed class ManagerTab_FarmingHysteresis(Manager manager)
         }
 
         var buttonRect = new Rect(pos.x, pos.y, width, ListEntryHeight);
-        if (
-            Widgets.ButtonText(buttonRect, "FarmingHysteresis.CMR.CropRotation.AddCrop".Translate())
-        )
+        var buttonLabel = AddCropButtonLabelKey(job.RotationEntries.Count).Translate();
+        if (Widgets.ButtonText(buttonRect, buttonLabel))
         {
             var options = addable
                 .Select(plantDef => new FloatMenuOption(

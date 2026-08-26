@@ -21,6 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Plant pots (and any other grower that can only ever grow purely decorative plants) are no longer offered by CMR-managed hysteresis's 'All growers'/area selection, since they can never produce anything for hysteresis to track.
 - Fixed CMR crop rotation's 'Wait for growth to finish' mode not actually protecting a not-yet-mature leftover plant from the outgoing crop: if the grower's zone had 'Allow cutting mature plants' turned on, colonists would cut the leftover down anyway to make room for the new crop, instead of leaving it to mature and harvesting it normally. The new crop is still sown into any of the grower's other cells that are already clear while the leftovers from the old crop finishes growing.
 - Fixed CMR crop rotation permanently allowing harvest on a grower if any non-rotation plant (e.g. a wild filler plant) happened to be standing on one of its cells. The grower's hysteresis latch is meant to keep blocking harvest once it's disallowed, and this mistakenly overrode that for good.
+- The CMR crop rotation button now says 'Add crop…' when a job has no crops configured yet, instead of 'Add additional crop…', which had confused players into thinking a crop was already set up.
 
 ## [0.10.0] - 2026-07-22
 

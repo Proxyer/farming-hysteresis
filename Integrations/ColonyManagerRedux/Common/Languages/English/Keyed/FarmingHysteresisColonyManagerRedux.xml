@@ -34,6 +34,7 @@
     <FarmingHysteresis.CMR.CropRotation.MoveUp>Move earlier in the rotation</FarmingHysteresis.CMR.CropRotation.MoveUp>
     <FarmingHysteresis.CMR.CropRotation.MoveDown>Move later in the rotation</FarmingHysteresis.CMR.CropRotation.MoveDown>
     <FarmingHysteresis.CMR.CropRotation.Remove>Remove this crop from the rotation</FarmingHysteresis.CMR.CropRotation.Remove>
+    <FarmingHysteresis.CMR.CropRotation.AddFirstCrop>Add crop…</FarmingHysteresis.CMR.CropRotation.AddFirstCrop>
     <FarmingHysteresis.CMR.CropRotation.AddCrop>Add additional crop…</FarmingHysteresis.CMR.CropRotation.AddCrop>
     <FarmingHysteresis.CMR.CropRotation.EntryLabel>{0}. {1}</FarmingHysteresis.CMR.CropRotation.EntryLabel>
     <FarmingHysteresis.CMR.CropRotation.ActiveEntryLabel>{0}. {1} (currently active)</FarmingHysteresis.CMR.CropRotation.ActiveEntryLabel>

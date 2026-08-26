@@ -69,3 +69,23 @@ internal static class DescribeUntrackedProductHintTests
         Assert.That(DescribeUntrackedProductHint(entry)).Is.Null();
     }
 }
+
+// Covers AddCropButtonLabelKey's branch selection - a player with no rotation entries yet read
+// the "additional crop" wording as implying one already existed, so the empty-rotation case must
+// resolve to a distinct key.
+[HotSwappable]
+[TestSuite]
+internal static class AddCropButtonLabelKeyTests
+{
+    [Test]
+    public static void ReturnsFirstCropKeyWhenNoEntriesExist() =>
+        Assert
+            .That(AddCropButtonLabelKey(0))
+            .Is.EqualTo("FarmingHysteresis.CMR.CropRotation.AddFirstCrop");
+
+    [Test]
+    public static void ReturnsAdditionalCropKeyWhenEntriesExist() =>
+        Assert
+            .That(AddCropButtonLabelKey(1))
+            .Is.EqualTo("FarmingHysteresis.CMR.CropRotation.AddCrop");
+}
