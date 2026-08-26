@@ -35,6 +35,20 @@ internal sealed class ManagerSettings_FarmingHysteresis : ManagerSettings
     /// </summary>
     public HysteresisMode DefaultHysteresisMode = HysteresisMode.Sowing;
 
+    /// <summary>
+    /// The <see cref="RotationMode"/> a newly created <see cref="ManagerJob_FarmingHysteresis"/>
+    /// starts with - see <see cref="DefaultHysteresisLowerBound"/> for why this is CMR's own
+    /// independent copy rather than reading <see cref="FarmingHysteresisMod.Settings"/>.
+    /// </summary>
+    public RotationMode DefaultRotationMode = RotationMode.Priority;
+
+    /// <summary>
+    /// The <see cref="RotationSwitchMode"/> a newly created <see cref="ManagerJob_FarmingHysteresis"/>
+    /// starts with - see <see cref="DefaultHysteresisLowerBound"/> for why this is CMR's own
+    /// independent copy rather than reading <see cref="FarmingHysteresisMod.Settings"/>.
+    /// </summary>
+    public RotationSwitchMode DefaultSwitchMode = RotationSwitchMode.WaitForGrowthToFinish;
+
     /// <summary>Not scribed - <see cref="Widgets.IntEntry"/> needs a stable buffer across frames.</summary>
     private string? _defaultLowerBoundBuffer;
 
@@ -107,35 +121,11 @@ internal sealed class ManagerSettings_FarmingHysteresis : ManagerSettings
     {
         var start = pos;
 
-        var modeRect = new Rect(pos.x, pos.y, width, ListEntryHeight);
-        var modeLabelRect = new Rect(
-            modeRect.x,
-            modeRect.y,
-            modeRect.width * 0.6f,
-            modeRect.height
-        );
-        var modeButtonRect = new Rect(
-            modeLabelRect.xMax,
-            modeRect.y,
-            modeRect.width - modeLabelRect.width,
-            modeRect.height
-        );
-        Widgets.Label(modeLabelRect, "FarmingHysteresis.HysteresisMode".Translate());
-        if (
-            Widgets.ButtonText(
-                modeButtonRect,
-                "FarmingHysteresis.Control".Translate(DefaultHysteresisMode.AsString())
-            )
-        )
-        {
-            var options = ((HysteresisMode[])Enum.GetValues(typeof(HysteresisMode))).Select(
-                mode => new FloatMenuOption(
-                    "FarmingHysteresis.Control".Translate(mode.AsString()),
-                    () => DefaultHysteresisMode = mode
-                )
-            );
-            Find.WindowStack.Add(new FloatMenu([.. options]));
-        }
+        DrawHysteresisModeSelector(pos, width);
+        pos.y += ListEntryHeight;
+        DrawRotationModeSelector(pos, width);
+        pos.y += ListEntryHeight;
+        DrawSwitchModeSelector(pos, width);
         pos.y += ListEntryHeight;
 
         Widgets.Label(
@@ -164,6 +154,76 @@ internal sealed class ManagerSettings_FarmingHysteresis : ManagerSettings
         return pos.y - start.y;
     }
 
+    /// <summary>
+    /// Default-<see cref="HysteresisMode"/> icon row - same <c>Utilities.DrawToggle</c> cell
+    /// layout as <see cref="ManagerTab_FarmingHysteresis"/>'s per-job selector, so the settings
+    /// tab visually matches the job's own crop rotation UI.
+    /// </summary>
+    private void DrawHysteresisModeSelector(Vector2 pos, float width)
+    {
+        var modes = (HysteresisMode[])Enum.GetValues(typeof(HysteresisMode));
+        var cellWidth = width / modes.Length;
+        var cellRect = new Rect(pos.x, pos.y, cellWidth, ListEntryHeight);
+
+        foreach (var mode in modes)
+        {
+            Utilities.DrawToggle(
+                cellRect,
+                mode.AsString().CapitalizeFirst(),
+                $"FarmingHysteresis.CMR.HysteresisMode.{mode}.Tip".Translate(),
+                DefaultHysteresisMode == mode,
+                () => DefaultHysteresisMode = mode,
+                () => { },
+                wrap: false
+            );
+            cellRect.x += cellWidth;
+        }
+    }
+
+    /// <summary>Default-<see cref="RotationMode"/> icon row - see <see cref="DrawHysteresisModeSelector"/>.</summary>
+    private void DrawRotationModeSelector(Vector2 pos, float width)
+    {
+        var modes = (RotationMode[])Enum.GetValues(typeof(RotationMode));
+        var cellWidth = width / modes.Length;
+        var cellRect = new Rect(pos.x, pos.y, cellWidth, ListEntryHeight);
+
+        foreach (var mode in modes)
+        {
+            Utilities.DrawToggle(
+                cellRect,
+                $"FarmingHysteresis.CMR.RotationMode.{mode}".Translate(),
+                $"FarmingHysteresis.CMR.RotationMode.{mode}.Tip".Translate(),
+                DefaultRotationMode == mode,
+                () => DefaultRotationMode = mode,
+                () => { },
+                wrap: false
+            );
+            cellRect.x += cellWidth;
+        }
+    }
+
+    /// <summary>Default-<see cref="RotationSwitchMode"/> icon row - see <see cref="DrawHysteresisModeSelector"/>.</summary>
+    private void DrawSwitchModeSelector(Vector2 pos, float width)
+    {
+        var modes = (RotationSwitchMode[])Enum.GetValues(typeof(RotationSwitchMode));
+        var cellWidth = width / modes.Length;
+        var cellRect = new Rect(pos.x, pos.y, cellWidth, ListEntryHeight);
+
+        foreach (var mode in modes)
+        {
+            Utilities.DrawToggle(
+                cellRect,
+                $"FarmingHysteresis.CMR.RotationSwitchMode.{mode}".Translate(),
+                $"FarmingHysteresis.CMR.RotationSwitchMode.{mode}.Tip".Translate(),
+                DefaultSwitchMode == mode,
+                () => DefaultSwitchMode = mode,
+                () => { },
+                wrap: false
+            );
+            cellRect.x += cellWidth;
+        }
+    }
+
     public override void ExposeData()
     {
         base.ExposeData();
@@ -183,6 +243,12 @@ internal sealed class ManagerSettings_FarmingHysteresis : ManagerSettings
             ref DefaultHysteresisMode,
             "defaultHysteresisMode",
             HysteresisMode.Sowing
+        );
+        Scribe_Values.Look(ref DefaultRotationMode, "defaultRotationMode", RotationMode.Priority);
+        Scribe_Values.Look(
+            ref DefaultSwitchMode,
+            "defaultSwitchMode",
+            RotationSwitchMode.WaitForGrowthToFinish
         );
 
         if (Scribe.mode is LoadSaveMode.LoadingVars or LoadSaveMode.PostLoadInit)

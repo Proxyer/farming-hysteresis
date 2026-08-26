@@ -233,17 +233,22 @@ internal sealed class ManagerJob_FarmingHysteresis
 
     /// <summary>
     /// Whether switching to the next rotation entry force-clears the outgoing crop's not-yet-ripe
-    /// leftovers or leaves them to mature and harvest normally - see <see cref="RotationSwitchMode"/>.
+    /// leftovers or leaves them to mature and harvest normally - see <see cref="RotationSwitchMode"/>,
+    /// defaulting to <see cref="ManagerSettings_FarmingHysteresis.DefaultSwitchMode"/> for a freshly
+    /// created job.
     /// </summary>
-    public RotationSwitchMode SwitchMode = RotationSwitchMode.WaitForGrowthToFinish;
+    public RotationSwitchMode SwitchMode =
+        ManagerSettings_FarmingHysteresis.Instance?.DefaultSwitchMode
+        ?? RotationSwitchMode.WaitForGrowthToFinish;
 
     /// <summary>
     /// Which rotation semantics (see <see cref="RotationMode"/>) this job uses to pick
-    /// <see cref="ActiveEntryId"/> each manager job cycle - defaults to
-    /// <see cref="RotationMode.Priority"/> so an old save (or a save from before this field
-    /// existed) keeps behaving exactly as it did before, with zero behavior change.
+    /// <see cref="ActiveEntryId"/> each manager job cycle - defaulting to
+    /// <see cref="ManagerSettings_FarmingHysteresis.DefaultRotationMode"/> for a freshly created
+    /// job.
     /// </summary>
-    public RotationMode Mode = RotationMode.Priority;
+    public RotationMode Mode =
+        ManagerSettings_FarmingHysteresis.Instance?.DefaultRotationMode ?? RotationMode.Priority;
 
     /// <summary>
     /// Which plant grower activities (see <see cref="FarmingHysteresis.HysteresisMode"/>) this
