@@ -366,12 +366,12 @@ internal sealed class Trigger_Hysteresis(ManagerJob job) : Trigger(job)
     /// <see cref="ApplyCycleUpdate"/>), which can be an arbitrary delay after the job/entry is
     /// created.
     /// </remarks>
-    internal static string DescribeLatchMode(LatchMode latchMode) =>
+    internal static string DescribeLatchMode(LatchMode latchMode, HysteresisMode hysteresisMode) =>
         "FarmingHysteresis.LatchModeDesc".Translate(
             latchMode == LatchMode.Unknown
                 ? "FarmingHysteresis.CMR.LatchModeDesc.Unknown".Translate()
                 : ("FarmingHysteresis.LatchModeDesc." + latchMode).Translate(
-                    FarmingHysteresisMod.Settings.HysteresisMode.AsString()
+                    hysteresisMode.AsString()
                 )
         );
 
@@ -585,7 +585,12 @@ internal sealed class Trigger_Hysteresis(ManagerJob job) : Trigger(job)
             "FarmingHysteresis.InStorage".Translate(TrackedCountNoun, TrackedThingCount)
         );
 
-        DrawWrappedLabel(ref cur, width, entryHeight, DescribeLatchMode(LatchModeValue));
+        DrawWrappedLabel(
+            ref cur,
+            width,
+            entryHeight,
+            DescribeLatchMode(LatchModeValue, HysteresisJob.HysteresisMode)
+        );
     }
 
     /// <summary>

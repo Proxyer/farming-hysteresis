@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Each Colony Manager Redux-managed hysteresis job now has its own 'Hysteresis mode' choice (Sowing / Harvesting / Both) in the crop rotation section, instead of sharing one mod-wide setting - so different jobs can control different things. Existing jobs get the old setting's value as their default.
+
+### Changed
+
+- The default hysteresis bounds and hysteresis mode used when creating a new Colony Manager Redux-managed job or crop are now configured in Colony Manager Redux's own settings tab (under the Farming Hysteresis manager job), rather than the mod's own settings tab. The mod's own settings tab keeps its own, independent copies, which only affect its older per-grower controls.
+
 ### Fixed
 
 - Plant pots (and any other grower that can only ever grow purely decorative plants) are no longer offered by CMR-managed hysteresis's 'All growers'/area selection, since they can never produce anything for hysteresis to track.

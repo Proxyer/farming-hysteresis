@@ -76,6 +76,11 @@ internal static class HysteresisMigration
         job.HysteresisTrigger.Lower = lower;
         job.HysteresisTrigger.Upper = upper;
 
+        // Preserves exactly what the old per-grower setup was actually doing before migration,
+        // rather than the new job starting out on whatever ManagerSettings_FarmingHysteresis's
+        // own default happens to be.
+        job.HysteresisMode = FarmingHysteresisMod.Settings.HysteresisMode;
+
         // Mirrors ManagerTab_FarmingHysteresis's own Manage! button (IsManaged = true alongside
         // JobTracker.Add) - JobTracker.Add alone doesn't commit the job, so without this the
         // migrated job would sit in the tracker read as unmanaged, showing "Manage!" instead of

@@ -56,8 +56,12 @@ internal sealed class CropRotationEntry : IExposable
         }
     }
 
-    public int Lower = FarmingHysteresisMod.Settings.DefaultHysteresisLowerBound;
-    public int Upper = FarmingHysteresisMod.Settings.DefaultHysteresisUpperBound;
+    public int Lower =
+        ManagerSettings_FarmingHysteresis.Instance?.DefaultHysteresisLowerBound
+        ?? Constants.DefaultHysteresisLowerBound;
+    public int Upper =
+        ManagerSettings_FarmingHysteresis.Instance?.DefaultHysteresisUpperBound
+        ?? Constants.DefaultHysteresisUpperBound;
 
     /// <summary>
     /// This entry's own hysteresis latch state, recomputed every manager job cycle regardless of
@@ -192,12 +196,14 @@ internal sealed class CropRotationEntry : IExposable
         Scribe_Values.Look(
             ref Lower,
             "lower",
-            FarmingHysteresisMod.Settings.DefaultHysteresisLowerBound
+            ManagerSettings_FarmingHysteresis.Instance?.DefaultHysteresisLowerBound
+                ?? Constants.DefaultHysteresisLowerBound
         );
         Scribe_Values.Look(
             ref Upper,
             "upper",
-            FarmingHysteresisMod.Settings.DefaultHysteresisUpperBound
+            ManagerSettings_FarmingHysteresis.Instance?.DefaultHysteresisUpperBound
+                ?? Constants.DefaultHysteresisUpperBound
         );
         Scribe_Values.Look(ref LatchModeValue, "latchMode", LatchMode.Unknown);
         Scribe_Values.Look(

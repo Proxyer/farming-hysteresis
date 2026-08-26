@@ -34,3 +34,29 @@ internal static class HysteresisModeExtensionsAsStringTests
     [ShouldThrow(typeof(InvalidOperationException))]
     public static void UncoveredHysteresisModeThrows() => _ = ((HysteresisMode)99).AsString();
 }
+
+[HotSwappable]
+[TestSuite]
+internal static class HysteresisModeExtensionsControlsTests
+{
+    [Test]
+    public static void SowingControlsSowingOnly()
+    {
+        Assert.That(HysteresisMode.Sowing.ControlsSowing()).Is.True();
+        Assert.That(HysteresisMode.Sowing.ControlsHarvesting()).Is.False();
+    }
+
+    [Test]
+    public static void HarvestingControlsHarvestingOnly()
+    {
+        Assert.That(HysteresisMode.Harvesting.ControlsSowing()).Is.False();
+        Assert.That(HysteresisMode.Harvesting.ControlsHarvesting()).Is.True();
+    }
+
+    [Test]
+    public static void SowingAndHarvestingControlsBoth()
+    {
+        Assert.That(HysteresisMode.SowingAndHarvesting.ControlsSowing()).Is.True();
+        Assert.That(HysteresisMode.SowingAndHarvesting.ControlsHarvesting()).Is.True();
+    }
+}

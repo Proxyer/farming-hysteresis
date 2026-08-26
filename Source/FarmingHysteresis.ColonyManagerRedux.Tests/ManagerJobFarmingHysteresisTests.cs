@@ -569,3 +569,37 @@ internal static class UnresolvedSpecificGrowerReferenceCleanupTests
             )
             .Is.False();
 }
+
+// A job saved before per-job HysteresisMode existed has no scribed node for
+// HasMigratedHysteresisMode, so it loads that flag as false (ExposeData's scribed default) -
+// which must pick up the old global HysteresisMode setting instead of whatever
+// HysteresisMode.Sowing default the (missing) node would otherwise have resolved to. A job saved
+// after the field existed must keep exactly what it loaded, regardless of the legacy value.
+[HotSwappable]
+[TestSuite]
+internal static class ResolveHysteresisModeAfterLoadTests
+{
+    [Test]
+    public static void AlreadyMigratedJobKeepsItsLoadedMode() =>
+        Assert
+            .That(
+                ResolveHysteresisModeAfterLoad(
+                    hasMigratedHysteresisMode: true,
+                    loadedHysteresisMode: HysteresisMode.Harvesting,
+                    legacyHysteresisMode: HysteresisMode.SowingAndHarvesting
+                )
+            )
+            .Is.EqualTo(HysteresisMode.Harvesting);
+
+    [Test]
+    public static void UnmigratedJobAdoptsTheLegacyGlobalMode() =>
+        Assert
+            .That(
+                ResolveHysteresisModeAfterLoad(
+                    hasMigratedHysteresisMode: false,
+                    loadedHysteresisMode: HysteresisMode.Sowing,
+                    legacyHysteresisMode: HysteresisMode.SowingAndHarvesting
+                )
+            )
+            .Is.EqualTo(HysteresisMode.SowingAndHarvesting);
+}

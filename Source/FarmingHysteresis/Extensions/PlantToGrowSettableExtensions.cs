@@ -119,31 +119,27 @@ internal static class PlantToGrowSettableExtensions
 
     /// <summary>
     /// Applies the hysteresis latch's enabled/disabled <paramref name="state"/> to
-    /// <paramref name="plantGrower"/>'s sow/harvest gating. <paramref name="forceHarvestEnabled"/>
-    /// (used by the CMR integration's crop rotation) overrides harvest to stay allowed regardless
-    /// of <paramref name="state"/>/<see cref="Settings.ControlHarvesting"/> - needed so a crop
-    /// this job has already rotated away from never gets stranded unharvested, permanently
-    /// occupying its cell and stalling the rotation.
+    /// <paramref name="plantGrower"/>'s sow/harvest gating, per <paramref name="mode"/> (the
+    /// legacy per-grower engine passes <see cref="Settings.HysteresisMode"/>; the CMR integration
+    /// passes its own job-level mode). <paramref name="forceHarvestEnabled"/> (used by the CMR
+    /// integration's crop rotation) overrides harvest to stay allowed regardless of
+    /// <paramref name="state"/>/<paramref name="mode"/> - needed so a crop this job has already
+    /// rotated away from never gets stranded unharvested, permanently occupying its cell and
+    /// stalling the rotation.
     /// </summary>
     internal static void SetHysteresisControlState(
         this IPlantToGrowSettable plantGrower,
+        HysteresisMode mode,
         bool state,
         bool forceHarvestEnabled = false
     )
     {
         var def = GetControlDefForPlantGrower(plantGrower, nameof(SetHysteresisControlState));
 
-        def.SetAllowSow(
-            plantGrower,
-            ComputeAllowSow(FarmingHysteresisMod.Settings.ControlSowing, state)
-        );
+        def.SetAllowSow(plantGrower, ComputeAllowSow(mode.ControlsSowing(), state));
         def.SetAllowHarvest(
             plantGrower,
-            ComputeAllowHarvest(
-                FarmingHysteresisMod.Settings.ControlHarvesting,
-                state,
-                forceHarvestEnabled
-            )
+            ComputeAllowHarvest(mode.ControlsHarvesting(), state, forceHarvestEnabled)
         );
     }
 

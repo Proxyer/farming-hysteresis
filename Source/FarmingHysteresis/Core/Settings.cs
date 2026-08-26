@@ -95,14 +95,12 @@ public class Settings : ModSettings
     /// <summary>
     /// Gets whether sowing should be controlled based on the current <see cref="HysteresisMode"/>.
     /// </summary>
-    public bool ControlSowing =>
-        _hysteresisMode is HysteresisMode.Sowing or HysteresisMode.SowingAndHarvesting;
+    public bool ControlSowing => _hysteresisMode.ControlsSowing();
 
     /// <summary>
     /// Gets whether harvesting should be controlled based on the current <see cref="HysteresisMode"/>.
     /// </summary>
-    public bool ControlHarvesting =>
-        _hysteresisMode is HysteresisMode.Harvesting or HysteresisMode.SowingAndHarvesting;
+    public bool ControlHarvesting => _hysteresisMode.ControlsHarvesting();
 
     /// <summary>
     /// Gets or sets whether the ilyvion.Laboratory dependency warning should be shown.
@@ -177,6 +175,29 @@ public class Settings : ModSettings
         Listing_Standard listingStandard = new();
         listingStandard.Begin(inRect);
 
+        // Every setting below only affects the mod's own older per-grower engine/UI, which
+        // Colony Manager Redux (once it's taken over control) replaces entirely, using its own
+        // copies of the default bounds/mode instead - grey them out rather than hiding them
+        // outright so the player isn't left wondering where a setting went.
+        var cmrActive = !FarmingHysteresisMod.HysteresisController.ShowGrowerUi;
+        var previousFont = Text.Font;
+        Text.Font = GameFont.Tiny;
+        GUI.color = Color.grey;
+        _ = listingStandard.Label(
+            "FarmingHysteresis.OnlyAppliesWithoutCmr".Translate(),
+            -1f,
+            (
+                cmrActive
+                    ? "FarmingHysteresis.OnlyAppliesWithoutCmrTooltip.Active"
+                    : "FarmingHysteresis.OnlyAppliesWithoutCmrTooltip.Inactive"
+            ).Translate()
+        );
+        GUI.color = Color.white;
+        Text.Font = previousFont;
+
+        var previousGuiEnabled = GUI.enabled;
+        GUI.enabled = !cmrActive;
+
         if (
             listingStandard.ButtonTextLabeledCompat(
                 "FarmingHysteresis.HysteresisMode".Translate(),
@@ -222,29 +243,6 @@ public class Settings : ModSettings
             _defaultHysteresisLowerBound,
             _defaultHysteresisUpperBound
         );
-
-        // The settings below only affect the mod's own older per-grower engine/UI, which Colony
-        // Manager Redux (once it's taken over control) replaces entirely - grey them out rather
-        // than hiding them outright so the player isn't left wondering where a setting went.
-        listingStandard.GapLine();
-        var cmrActive = !FarmingHysteresisMod.HysteresisController.ShowGrowerUi;
-        var previousFont = Text.Font;
-        Text.Font = GameFont.Tiny;
-        GUI.color = Color.grey;
-        _ = listingStandard.Label(
-            "FarmingHysteresis.OnlyAppliesWithoutCmr".Translate(),
-            -1f,
-            (
-                cmrActive
-                    ? "FarmingHysteresis.OnlyAppliesWithoutCmrTooltip.Active"
-                    : "FarmingHysteresis.OnlyAppliesWithoutCmrTooltip.Inactive"
-            ).Translate()
-        );
-        GUI.color = Color.white;
-        Text.Font = previousFont;
-
-        var previousGuiEnabled = GUI.enabled;
-        GUI.enabled = !cmrActive;
 
         listingStandard.CheckboxLabeled(
             "FarmingHysteresis.EnabledByDefault".Translate(),
@@ -351,4 +349,12 @@ public static class HysteresisModeExtensions
                 "FarmingHysteresis.SowingAndHarvesting".Translate(),
             _ => throw new InvalidOperationException($"Uncovered HysteresisMode: {mode}"),
         };
+
+    /// <summary>Gets whether <paramref name="mode"/> controls sowing.</summary>
+    public static bool ControlsSowing(this HysteresisMode mode) =>
+        mode is HysteresisMode.Sowing or HysteresisMode.SowingAndHarvesting;
+
+    /// <summary>Gets whether <paramref name="mode"/> controls harvesting.</summary>
+    public static bool ControlsHarvesting(this HysteresisMode mode) =>
+        mode is HysteresisMode.Harvesting or HysteresisMode.SowingAndHarvesting;
 }

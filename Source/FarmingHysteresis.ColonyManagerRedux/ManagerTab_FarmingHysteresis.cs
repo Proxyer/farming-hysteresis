@@ -144,6 +144,7 @@ internal sealed class ManagerTab_FarmingHysteresis(Manager manager)
     {
         var start = pos;
 
+        DrawHysteresisModeSelector(job, ref pos, width);
         DrawRotationModeSelector(job, ref pos, width);
         DrawSwitchModeSelector(job, ref pos, width);
 
@@ -166,6 +167,38 @@ internal sealed class ManagerTab_FarmingHysteresis(Manager manager)
         pos.y += DrawAddCropButton(job, validTargetPlants, pos, width);
 
         return pos.y - start.y;
+    }
+
+    /// <summary>
+    /// Per-job choice of which plant grower activities (see
+    /// <see cref="FarmingHysteresis.HysteresisMode"/>) this job's hysteresis latch controls - same
+    /// toggle-pair shape as <see cref="DrawRotationModeSelector"/>/<see cref="DrawSwitchModeSelector"/>.
+    /// </summary>
+    private static void DrawHysteresisModeSelector(
+        ManagerJob_FarmingHysteresis job,
+        ref Vector2 pos,
+        float width
+    )
+    {
+        var modes = (HysteresisMode[])Enum.GetValues(typeof(HysteresisMode));
+        var cellWidth = width / modes.Length;
+        var cellRect = new Rect(pos.x, pos.y, cellWidth, ListEntryHeight);
+
+        foreach (var mode in modes)
+        {
+            Utilities.DrawToggle(
+                cellRect,
+                mode.AsString().CapitalizeFirst(),
+                $"FarmingHysteresis.CMR.HysteresisMode.{mode}.Tip".Translate(),
+                job.HysteresisMode == mode,
+                () => job.HysteresisMode = mode,
+                () => { },
+                wrap: false
+            );
+            cellRect.x += cellWidth;
+        }
+
+        pos.y += ListEntryHeight;
     }
 
     /// <summary>
@@ -471,7 +504,7 @@ internal sealed class ManagerTab_FarmingHysteresis(Manager manager)
                 : (TipSignal?)
                     "FarmingHysteresis.CMR.CropRotation.BoundsTip".Translate(
                         entry.PlantDef.label,
-                        FarmingHysteresisMod.Settings.HysteresisMode.AsString(),
+                        job.HysteresisMode.AsString(),
                         job.RotationEntries.Count > 1
                             ? "FarmingHysteresis.CMR.CropRotation.BoundsTip.NextCrop".Translate()
                             : "FarmingHysteresis.CMR.CropRotation.BoundsTip.Stop".Translate()
@@ -551,7 +584,10 @@ internal sealed class ManagerTab_FarmingHysteresis(Manager manager)
         // there was no way to tell whether an inactive entry was BetweenBoundsEnabled or
         // BetweenBoundsDisabled (i.e. whether it'll start growing again the moment it becomes
         // active) just from its bounds and current count.
-        var latchDescription = Trigger_Hysteresis.DescribeLatchMode(entry.LatchModeValue);
+        var latchDescription = Trigger_Hysteresis.DescribeLatchMode(
+            entry.LatchModeValue,
+            job.HysteresisMode
+        );
         var latchHeight = Mathf.Max(ListEntryHeight, Text.CalcHeight(latchDescription, width));
         Widgets.Label(new Rect(pos.x, pos.y, width, latchHeight), latchDescription);
         pos.y += latchHeight;

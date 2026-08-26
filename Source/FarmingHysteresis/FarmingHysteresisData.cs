@@ -332,7 +332,10 @@ internal class FarmingHysteresisData : IBoundedValueAccessor
             values.BoundValueRaw.Upper
         );
 
-        plantToGrowSettable.SetHysteresisControlState(ResolveControlState(latchMode));
+        plantToGrowSettable.SetHysteresisControlState(
+            FarmingHysteresisMod.Settings.HysteresisMode,
+            ResolveControlState(latchMode)
+        );
     }
 
     /// <summary>

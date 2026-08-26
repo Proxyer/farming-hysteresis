@@ -246,6 +246,30 @@ internal sealed class ManagerJob_FarmingHysteresis
     public RotationMode Mode = RotationMode.Priority;
 
     /// <summary>
+    /// Which plant grower activities (see <see cref="FarmingHysteresis.HysteresisMode"/>) this
+    /// job's hysteresis latch controls - a per-job choice, defaulting to
+    /// <see cref="ManagerSettings_FarmingHysteresis.DefaultHysteresisMode"/> for a freshly created
+    /// job. See <see cref="HasMigratedHysteresisMode"/> for how an existing job saved before this
+    /// field existed picks up its starting value instead.
+    /// </summary>
+    public HysteresisMode HysteresisMode =
+        ManagerSettings_FarmingHysteresis.Instance?.DefaultHysteresisMode ?? HysteresisMode.Sowing;
+
+    /// <summary>
+    /// Whether <see cref="HysteresisMode"/> has already been resolved for this job - <see
+    /// langword="true"/> by default (a freshly created job's field initializer above already gave
+    /// it a sensible value), but scribed with a default of <see langword="false"/>
+    /// (<see cref="ExposeData"/>), so a job saved before this field existed - which has no scribed
+    /// node for it at all - loads as <see langword="false"/> instead of keeping this in-memory
+    /// default. <see cref="ExposeData"/>'s <c>PostLoadInit</c> pass uses that <see
+    /// langword="false"/> to detect exactly this case and copy <see
+    /// cref="FarmingHysteresisMod.Settings"/>'s old global <c>HysteresisMode</c> - what this job
+    /// actually used to be controlled by - into <see cref="HysteresisMode"/> once, then flips this
+    /// back to <see langword="true"/> so it never runs again for this job.
+    /// </summary>
+    public bool HasMigratedHysteresisMode = true;
+
+    /// <summary>
     /// The plant currently being pushed onto every grower this job manages (see
     /// <see cref="ExecuteJobDataCoroutine"/>) - <see cref="ActiveEntry"/>'s plant, or
     /// <see langword="null"/> if the list is empty (nothing configured yet).
@@ -728,7 +752,11 @@ internal sealed class ManagerJob_FarmingHysteresis
             // CmrHysteresisController.ShouldProtectLeftoverFromCut (checked by
             // WorkGiver_GrowerSow_JobOnCell) rather than by disallowing sow on the whole grower -
             // that would also block sowing into cells that are already clear.
-            grower.SetHysteresisControlState(enabled, forceHarvestEnabled: hasLeftoverPlants);
+            grower.SetHysteresisControlState(
+                HysteresisMode,
+                enabled,
+                forceHarvestEnabled: hasLeftoverPlants
+            );
 
             if (grower.GetAllowSow() != beforeSow || grower.GetAllowHarvest() != beforeHarvest)
             {
@@ -767,6 +795,22 @@ internal sealed class ManagerJob_FarmingHysteresis
         bool spawned
     ) => isNull || destroyed || !spawned;
 
+    /// <summary>
+    /// Pure decision logic behind <see cref="ExposeData"/>'s one-time <see cref="HysteresisMode"/>
+    /// migration: a job whose scribed data already carried a <see cref="HasMigratedHysteresisMode"/>
+    /// node (i.e. it was saved after this field existed) keeps whatever
+    /// <see cref="HysteresisMode"/> it loaded with; one saved before this field existed - which
+    /// loads <paramref name="hasMigratedHysteresisMode"/> as <see langword="false"/>, since that's
+    /// <see cref="ExposeData"/>'s scribed default - instead picks up
+    /// <paramref name="legacyHysteresisMode"/>, the old global mod setting this job actually used
+    /// to be controlled by.
+    /// </summary>
+    internal static HysteresisMode ResolveHysteresisModeAfterLoad(
+        bool hasMigratedHysteresisMode,
+        HysteresisMode loadedHysteresisMode,
+        HysteresisMode legacyHysteresisMode
+    ) => hasMigratedHysteresisMode ? loadedHysteresisMode : legacyHysteresisMode;
+
     public override void ExposeData()
     {
         base.ExposeData();
@@ -778,6 +822,11 @@ internal sealed class ManagerJob_FarmingHysteresis
         Scribe_Values.Look(ref _nextEntryId, "nextEntryId", 1);
         Scribe_Values.Look(ref SwitchMode, "switchMode", RotationSwitchMode.WaitForGrowthToFinish);
         Scribe_Values.Look(ref Mode, "rotationMode", RotationMode.Priority);
+        Scribe_Values.Look(ref HysteresisMode, "hysteresisMode", HysteresisMode.Sowing);
+        // Defaulted here to false, not the field initializer's true, precisely so a save from
+        // before this field existed - which has no scribed node for it - loads as false rather
+        // than keeping the in-memory default; see HasMigratedHysteresisMode's own doc comment.
+        Scribe_Values.Look(ref HasMigratedHysteresisMode, "hasMigratedHysteresisMode", false);
         RotationEntries ??= [];
 
         if (Manager.ScribeSameMapData)
@@ -812,6 +861,13 @@ internal sealed class ManagerJob_FarmingHysteresis
 
         if (Scribe.mode == LoadSaveMode.PostLoadInit)
         {
+            HysteresisMode = ResolveHysteresisModeAfterLoad(
+                HasMigratedHysteresisMode,
+                HysteresisMode,
+                FarmingHysteresisMod.Settings.HysteresisMode
+            );
+            HasMigratedHysteresisMode = true;
+
             _ = SpecificGrowingZones.RemoveWhere(zone =>
                 ShouldRemoveUnresolvedGrowingZone(zone == null, zone?.Cells.Count ?? 0)
             );
