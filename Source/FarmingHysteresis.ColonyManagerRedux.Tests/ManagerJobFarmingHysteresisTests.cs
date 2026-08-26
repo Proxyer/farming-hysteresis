@@ -570,6 +570,33 @@ internal static class UnresolvedSpecificGrowerReferenceCleanupTests
             .Is.False();
 }
 
+// Regression guard: a deleted Area used as GrowerArea must be cleared out via
+// Notify_AreaRemoved, not left dangling until the next save/load cycle re-resolves the reference
+// as null.
+[HotSwappable]
+[TestSuite]
+internal static class IsRemovedAreaTests
+{
+    [Test]
+    public static void MatchingGrowerAreaIsRecognizedAsRemoved()
+    {
+        var area = new Area_Home();
+        Assert.That(IsRemovedArea(area, area)).Is.True();
+    }
+
+    [Test]
+    public static void DifferentAreaIsNotRecognizedAsRemoved()
+    {
+        var growerArea = new Area_Home();
+        var removedArea = new Area_Home();
+        Assert.That(IsRemovedArea(growerArea, removedArea)).Is.False();
+    }
+
+    [Test]
+    public static void NoGrowerAreaIsNotRecognizedAsRemoved() =>
+        Assert.That(IsRemovedArea(null, new Area_Home())).Is.False();
+}
+
 // A job saved before per-job HysteresisMode existed has no scribed node for
 // HasMigratedHysteresisMode, so it loads that flag as false (ExposeData's scribed default) -
 // which must pick up the old global HysteresisMode setting instead of whatever

@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Farming Hysteresis now cooperates with Smart Farming's 'No petty jobs' zone setting instead of fighting over it: a zone with 'No petty jobs' turned on keeps deferring to Smart Farming's own sowing decision, whichever hysteresis engine (legacy or Colony Manager Redux) controls it.
 
+### Fixed
+
+- Deleting a growing zone or area assigned to a CMR-managed hysteresis job no longer leaves a stale reference behind, which previously caused a 'Could not resolve reference' warning in the log the next time you loaded that save.
+
 ## [0.11.0] - 2026-08-26
 
 ### Added

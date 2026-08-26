@@ -14,6 +14,13 @@ public class FarmingHysteresisColonyManagerReduxMod : Mod
     public FarmingHysteresisColonyManagerReduxMod(ModContentPack content)
         : base(content)
     {
+        if (content == null)
+        {
+            throw new ArgumentNullException(nameof(content));
+        }
+
+        new Harmony(content.PackageId).PatchAll(Assembly.GetExecutingAssembly());
+
         FarmingHysteresisMod.Instance.LogMessage(
             "Colony Manager Redux integration loaded successfully!"
         );

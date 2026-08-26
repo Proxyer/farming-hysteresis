@@ -954,4 +954,27 @@ internal sealed class ManagerJob_FarmingHysteresis
             }
         }
     }
+
+    /// <summary>
+    /// Pure decision logic behind <see cref="Notify_AreaRemoved"/>.
+    /// </summary>
+    internal static bool IsRemovedArea(Area? growerArea, Area removedArea) =>
+        growerArea == removedArea;
+
+    protected override void Notify_AreaRemoved(Area area)
+    {
+        base.Notify_AreaRemoved(area);
+        if (IsRemovedArea(GrowerArea, area))
+        {
+            GrowerArea = null;
+        }
+    }
+
+    /// <summary>
+    /// Called by <c>Patch.Verse_Zone_Deregister</c> for every zone deregistration on this job's
+    /// map. Without this, a zone deleted mid-play staysin <see cref="SpecificGrowingZones"/>
+    /// until the next save/load cycle, which is what <see cref="ShouldRemoveUnresolvedGrowingZone"/>
+    /// otherwise has to clean up after the fact.
+    /// </summary>
+    internal void Notify_ZoneRemoved(Zone zone) => SpecificGrowingZones.Remove(zone);
 }
