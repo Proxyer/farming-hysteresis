@@ -41,7 +41,8 @@ internal sealed class CmrHysteresisController : IHysteresisController
         return targetPlantDef != null
             && ManagerJob_FarmingHysteresis.GrowerHasLeftoverPlants(
                 grower.Cells.Select(c => c.GetPlant(grower.Map)?.def),
-                targetPlantDef
+                targetPlantDef,
+                [.. job.RotationEntries.Select(e => e.PlantDef).OfType<ThingDef>()]
             );
     }
 

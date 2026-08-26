@@ -15,16 +15,14 @@ internal static class WorkGiver_GrowerHarvest_HasJobOnCell
             if (c.GetFirstBuilding(pawn.Map) is Building_PlantGrower buildingPlantGrower)
             {
                 var data = buildingPlantGrower.GetFarmingHysteresisData();
-                __result = ComputeResult(
-                    __result,
-                    data.Enabled,
-                    buildingPlantGrower.GetAllowHarvest()
-                );
+                var allowHarvest = buildingPlantGrower.GetAllowHarvest();
+                __result = ComputeResult(__result, data.Enabled, allowHarvest);
             }
             else if (c.GetZone(pawn.Map) is Zone_Growing zoneGrowing)
             {
                 var data = zoneGrowing.GetFarmingHysteresisData();
-                __result = ComputeResult(__result, data.Enabled, zoneGrowing.GetAllowHarvest());
+                var allowHarvest = zoneGrowing.GetAllowHarvest();
+                __result = ComputeResult(__result, data.Enabled, allowHarvest);
             }
         }
     }

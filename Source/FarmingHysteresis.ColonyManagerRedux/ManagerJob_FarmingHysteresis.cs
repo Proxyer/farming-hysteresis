@@ -618,15 +618,22 @@ internal sealed class ManagerJob_FarmingHysteresis
 
     /// <summary>
     /// Whether any of <paramref name="standingPlantDefs"/> (a grower's currently-standing plants,
-    /// one per cell) belongs to a crop other than <paramref name="targetPlantDef"/> - i.e. the
-    /// grower hasn't fully transitioned to the active rotation entry yet. Split out as a pure
-    /// function (fed by a thin live wrapper in <see cref="ExecuteJobDataCoroutine"/>) so it's
-    /// unit-testable without a live map/grower.
+    /// one per cell) belongs to a crop this job's rotation has grown - i.e. one of
+    /// <paramref name="rotationPlantDefs"/> - other than <paramref name="targetPlantDef"/>, meaning
+    /// the grower hasn't fully transitioned to the active rotation entry yet. A standing plant
+    /// outside <paramref name="rotationPlantDefs"/> (e.g. a wild filler plant sprouting in a cell
+    /// this job hasn't gotten around to sowing yet) is never a rotation leftover, regardless of its
+    /// def. Split out as a pure function (fed by a thin live wrapper in
+    /// <see cref="ExecuteJobDataCoroutine"/>) so it's unit-testable without a live map/grower.
     /// </summary>
     internal static bool GrowerHasLeftoverPlants(
         IEnumerable<ThingDef?> standingPlantDefs,
-        ThingDef targetPlantDef
-    ) => standingPlantDefs.Any(def => def != null && def != targetPlantDef);
+        ThingDef targetPlantDef,
+        HashSet<ThingDef> rotationPlantDefs
+    ) =>
+        standingPlantDefs.Any(def =>
+            def != null && def != targetPlantDef && rotationPlantDefs.Contains(def)
+        );
 
     /// <summary>
     /// Force-clears <paramref name="grower"/>'s not-yet-ripe leftover plants (any standing plant
@@ -678,6 +685,11 @@ internal sealed class ManagerJob_FarmingHysteresis
         var targetPlantDef = TargetPlantDef!;
         var enabled = HysteresisTrigger.State;
 
+        HashSet<ThingDef> rotationPlantDefs =
+        [
+            .. RotationEntries.Select(e => e.PlantDef).OfType<ThingDef>(),
+        ];
+
         foreach (var grower in data.Growers)
         {
             if (grower.GetPlantDefToGrow() != targetPlantDef)
@@ -694,7 +706,8 @@ internal sealed class ManagerJob_FarmingHysteresis
 
             var hasLeftoverPlants = GrowerHasLeftoverPlants(
                 grower.Cells.Select(c => c.GetPlant(grower.Map)?.def),
-                targetPlantDef
+                targetPlantDef,
+                rotationPlantDefs
             );
             if (hasLeftoverPlants && data.SwitchMode == RotationSwitchMode.SwitchImmediately)
             {

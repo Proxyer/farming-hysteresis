@@ -456,7 +456,9 @@ internal static class GrowerLabelTests
 
 // Regression guard: a grower still holding a plant that isn't the active rotation entry's crop
 // must be detected regardless of what else is standing in it, so the outgoing crop doesn't get
-// stranded during a rotation switch.
+// stranded during a rotation switch - but only when that other plant is itself one of this job's
+// rotation crops, not any incidental non-rotation plant (e.g. a wild filler plant sprouting in an
+// unsown cell), which must never count as a leftover.
 [HotSwappable]
 [TestSuite]
 internal static class GrowerHasLeftoverPlantsTests
@@ -466,7 +468,7 @@ internal static class GrowerHasLeftoverPlantsTests
     {
         var target = new ThingDef();
 
-        Assert.That(GrowerHasLeftoverPlants([target, target], target)).Is.False();
+        Assert.That(GrowerHasLeftoverPlants([target, target], target, [target])).Is.False();
     }
 
     [Test]
@@ -474,16 +476,29 @@ internal static class GrowerHasLeftoverPlantsTests
     {
         var target = new ThingDef();
 
-        Assert.That(GrowerHasLeftoverPlants([target, null, null], target)).Is.False();
+        Assert.That(GrowerHasLeftoverPlants([target, null, null], target, [target])).Is.False();
     }
 
     [Test]
-    public static void HasLeftoversWhenAnyCellHoldsADifferentPlant()
+    public static void HasLeftoversWhenAnyCellHoldsAnotherRotationCrop()
     {
         var target = new ThingDef();
         var outgoing = new ThingDef();
 
-        Assert.That(GrowerHasLeftoverPlants([target, outgoing, null], target)).Is.True();
+        Assert
+            .That(GrowerHasLeftoverPlants([target, outgoing, null], target, [target, outgoing]))
+            .Is.True();
+    }
+
+    [Test]
+    public static void NoLeftoversWhenTheOtherPlantIsntPartOfTheRotation()
+    {
+        var target = new ThingDef();
+        var wildPlant = new ThingDef();
+
+        Assert
+            .That(GrowerHasLeftoverPlants([target, wildPlant, null], target, [target]))
+            .Is.False();
     }
 }
 
