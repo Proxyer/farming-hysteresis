@@ -2,5 +2,6 @@ These directories/files are only here to ensure the assemblies with dependencies
 
 For reference:
 
--   2748889667: Vanilla Plants Expanded - More Plants
--   2023507013: Vanilla Expanded Framework
+- 2748889667: Vanilla Plants Expanded - More Plants
+- 2023507013: Vanilla Expanded Framework
+- 3220129183: Smart Farming
