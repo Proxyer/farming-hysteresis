@@ -1,3 +1,5 @@
+using ColonyManagerRedux;
+
 namespace FarmingHysteresis.ColonyManagerRedux;
 
 /// <summary>
@@ -18,6 +20,29 @@ internal sealed class CmrHysteresisController : IHysteresisController
     {
         // Growers are driven by ManagerJob_FarmingHysteresis's own gather/execute coroutines
         // under CMR's own job-tracker ticking, not this map-tick hook.
+    }
+
+    /// <summary>
+    /// Recomputed fresh from <paramref name="grower"/>'s current owning job (if any) rather than
+    /// from any cached per-grower state, so a job being deleted, going dormant, or simply no
+    /// longer including this grower in its scope stops the protection immediately - there's no
+    /// stored flag left over that a removal path would need to remember to clear.
+    /// </summary>
+    public bool ShouldProtectLeftoverFromCut(IPlantToGrowSettable grower)
+    {
+        var manager = Manager.For(grower.Map);
+        var job = ManagerJob_FarmingHysteresis.FindOwningJob(manager, grower);
+        if (job is not { IsManaged: true, SwitchMode: RotationSwitchMode.WaitForGrowthToFinish })
+        {
+            return false;
+        }
+
+        var targetPlantDef = job.TargetPlantDef;
+        return targetPlantDef != null
+            && ManagerJob_FarmingHysteresis.GrowerHasLeftoverPlants(
+                grower.Cells.Select(c => c.GetPlant(grower.Map)?.def),
+                targetPlantDef
+            );
     }
 
     public bool ShowGrowerUi => false;

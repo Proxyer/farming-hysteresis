@@ -26,6 +26,8 @@ internal sealed class DefaultHysteresisController : IHysteresisController
         }
     }
 
+    public bool ShouldProtectLeftoverFromCut(IPlantToGrowSettable grower) => false;
+
     public bool ShowGrowerUi => true;
 
     public bool ShowMainTab => true;

@@ -19,6 +19,16 @@ public interface IHysteresisController
     void Tick(Map map);
 
     /// <summary>
+    /// Whether vanilla's sow work-giver should be stopped from cutting down a not-yet-ripe plant
+    /// standing on one of <paramref name="grower"/>'s cells to clear it for the incoming crop -
+    /// queried live (rather than cached) so it stops applying the moment this controller no
+    /// longer has a genuine reason to protect the grower, with nothing to go stale. Only a
+    /// Colony Manager Redux crop rotation job (see
+    /// <c>ColonyManagerRedux.CmrHysteresisController</c>) ever has such a reason.
+    /// </summary>
+    bool ShouldProtectLeftoverFromCut(IPlantToGrowSettable grower);
+
+    /// <summary>
     /// Whether the default per-grower hysteresis UI (the enable/disable gizmo and
     /// <c>ITab_Hysteresis</c>) should render.
     /// </summary>

@@ -707,6 +707,14 @@ internal sealed class ManagerJob_FarmingHysteresis
             // Regardless of switch mode, a leftover plant from a crop this job has already
             // rotated away from must never be stranded unharvested - that would permanently
             // occupy its cell and stall the rotation.
+            //
+            // In WaitForGrowthToFinish mode specifically, a leftover plant's own cell must stay
+            // protected from vanilla's sow work-giver, which otherwise cuts down any occupying
+            // plant that isn't the wanted def to make room, regardless of maturity, whenever the
+            // zone's "allow cutting" is on. This is handled live by
+            // CmrHysteresisController.ShouldProtectLeftoverFromCut (checked by
+            // WorkGiver_GrowerSow_JobOnCell) rather than by disallowing sow on the whole grower -
+            // that would also block sowing into cells that are already clear.
             grower.SetHysteresisControlState(enabled, forceHarvestEnabled: hasLeftoverPlants);
 
             if (grower.GetAllowSow() != beforeSow || grower.GetAllowHarvest() != beforeHarvest)
