@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.11.0] - 2026-08-26
+
 ### Added
 
 - Each Colony Manager Redux-managed hysteresis job now has its own 'Hysteresis mode' choice (Sowing / Harvesting / Both) in the crop rotation section, instead of sharing one mod-wide setting - so different jobs can control different things. Existing jobs get the old setting's value as their default.
@@ -212,7 +214,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - First implementation of the mod.
 
-[Unreleased]: https://github.com/ilyvion/farming-hysteresis/compare/v0.10.0...HEAD
+[Unreleased]: https://github.com/ilyvion/farming-hysteresis/compare/v0.11.0...HEAD
+[0.11.0]: https://github.com/ilyvion/farming-hysteresis/compare/v0.10.0..v0.11.0
 [0.10.0]: https://github.com/ilyvion/farming-hysteresis/compare/v0.9.2..v0.10.0
 [0.9.2]: https://github.com/ilyvion/farming-hysteresis/compare/v0.9.1...v0.9.2
 [0.9.1]: https://github.com/ilyvion/farming-hysteresis/compare/v0.9.0...v0.9.1
