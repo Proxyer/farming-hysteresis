@@ -7,6 +7,68 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.12.0] - 2026-08-26
+
+### Added
+
+- Farming Hysteresis now cooperates with Smart Farming's 'No petty jobs' zone setting instead of fighting over it: a zone with 'No petty jobs' turned on keeps deferring to Smart Farming's own sowing decision, whichever hysteresis engine (legacy or Colony Manager Redux) controls it.
+
+### Fixed
+
+- Deleting a growing zone or area assigned to a CMR-managed hysteresis job no longer leaves a stale reference behind, which previously caused a 'Could not resolve reference' warning in the log the next time you loaded that save.
+
+## [0.11.0] - 2026-08-26
+
+### Added
+
+- Each Colony Manager Redux-managed hysteresis job now has its own 'Hysteresis mode' choice (Sowing / Harvesting / Both) in the crop rotation section, instead of sharing one mod-wide setting - so different jobs can control different things. Existing jobs get the old setting's value as their default.
+
+### Changed
+
+- The default hysteresis bounds and hysteresis mode used when creating a new Colony Manager Redux-managed job or crop are now configured in Colony Manager Redux's own settings tab (under the Farming Hysteresis manager job), rather than the mod's own settings tab. The mod's own settings tab keeps its own, independent copies, which only affect its older per-grower controls.
+
+### Fixed
+
+- The Farming Hysteresis manager job's default settings (under Colony Manager Redux's settings tab) now let you configure defaults for a new job's rotation priority (Priority / Round-robin) and rotation switching (Wait for growth to finish / Switch immediately) too, matching the other crop rotation options a new job already let you default. Previously only the hysteresis mode default was configurable, and it used a dropdown menu instead of the same checkmark row shown in the job itself; it now matches.
+- Plant pots (and any other grower that can only ever grow purely decorative plants) are no longer offered by CMR-managed hysteresis's 'All growers'/area selection, since they can never produce anything for hysteresis to track.
+- Fixed CMR crop rotation's 'Wait for growth to finish' mode not actually protecting a not-yet-mature leftover plant from the outgoing crop: if the grower's zone had 'Allow cutting mature plants' turned on, colonists would cut the leftover down anyway to make room for the new crop, instead of leaving it to mature and harvesting it normally. The new crop is still sown into any of the grower's other cells that are already clear while the leftovers from the old crop finishes growing.
+- Fixed CMR crop rotation permanently allowing harvest on a grower if any non-rotation plant (e.g. a wild filler plant) happened to be standing on one of its cells. The grower's hysteresis latch is meant to keep blocking harvest once it's disallowed, and this mistakenly overrode that for good.
+- The CMR crop rotation button now says 'Add crop…' when a job has no crops configured yet, instead of 'Add additional crop…', which had confused players into thinking a crop was already set up.
+
+## [0.10.0] - 2026-07-22
+
+### Added
+
+- Optional integration with [Colony Manager Redux](https://github.com/ilyvion/colony-manager-redux) (CMR): if you have CMR installed, you can now hand hysteresis control over to a CMR manager job instead of configuring it grower-by-grower. The manager job covers a chosen area/zone selection, shows up in CMR's own manager tab, and unlocks the features below. Turning this on is optional and per-save — everything continues to work exactly as before if you don't use it, and it defaults to on only for new games with CMR installed.
+- Crop rotation for CMR-managed hysteresis: set up an ordered list of crops for a job, and once the current crop's stock threshold is satisfied, growers automatically switch to the next crop in the list, cycling back around. Resolves [#6](https://github.com/ilyvion/farming-hysteresis/issues/6).
+- CMR-managed hysteresis can now track a different item than the one it's actually growing — for example, sowing hops based on how much beer you have in stock, rather than how many hops. Resolves [#16](https://github.com/ilyvion/farming-hysteresis/issues/16).
+- CMR-managed hysteresis jobs get a graph tracking stock against the lower and upper bounds over time, same as CMR's other manager jobs. Resolves [#17](https://github.com/ilyvion/farming-hysteresis/issues/17).
+- Dual-crop plants from Vanilla Expanded Framework (e.g. mods adding a bonus secondary harvest alongside the main one) are now recognized by CMR-managed hysteresis, with a per-crop choice of tracking the primary product, the secondary product, or both. Resolves [#25](https://github.com/ilyvion/farming-hysteresis/issues/25).
+- A one-time, dismissible message for players who don't use Colony Manager Redux, noting that future development is focused on the CMR integration above. It's purely informational — nothing changes and nothing is required if you'd rather not use CMR.
+- A third 'Game' bounds option, alongside the existing 'Self' and 'Map' ones. Growing zones and hydroponics basins set to 'Game' share their hysteresis bounds with every other grower of the same crop across your _entire_ save, not just the map they're on — so the bounds now survive traveling between maps, including via Odyssey gravships. Resolves [#26](https://github.com/ilyvion/farming-hysteresis/issues/26).
+- The old 'global' bounds option has been renamed 'Map' to make clear it's shared per-map, not across your whole save. Existing zones and basins using it are carried over automatically; no action needed.
+- The bounds-source setting is now a single button that opens a menu with all three choices (Self / Map / Game), replacing the old on/off checkbox.
+
+### Changed
+
+- In the mod settings, options that only matter for the mod's older per-grower controls are now greyed out and explained as such once Colony Manager Redux has taken over hysteresis control, rather than sitting there looking like they still do something.
+- Reduced the overhead of hysteresis's grower lookups, which run repeatedly as colonists search for jobs. Shouldn't be noticeable except possibly in colonies with a very large number of growing zones and plant pots.
+- The per-grower hysteresis inspect tab no longer recomputes the harvested item's stockpile count every frame it's open, only when actually displaying it.
+
+### Fixed
+
+- Growing zones and hydroponics basins using 'Map' bounds now always check against the bounds of the map they're actually on, instead of whichever map you currently have open.
+- Fixed a crash that could permanently disable hysteresis on a grower if its harvested-item count happened to land exactly on the lower bound the very first time it was checked (e.g. right after loading a save or enabling hysteresis).
+- If a third-party mod ever registers a grower type that's already handled by another mod, the game now shows a load-time error naming the conflicting defs instead of crashing during play.
+- Fixed harvesting staying permanently blocked on a growing zone or plant grower after turning hysteresis off for it, if harvesting happened to be latched shut at the moment it was disabled.
+- Fixed the wrong bounds getting carried over when switching a grower to 'Map' or 'Game' bounds for the first time for that crop; the lower bound could silently get clamped down to whatever the (still-default) upper bound happened to be.
+- The Hysteresis main tab's bound entry fields now stop you from typing in an invalid combination (lower bound above upper bound, or a negative bound), matching how the per-grower bound entry already behaved.
+- Simply opening the Hysteresis main tab no longer permanently saves default bounds for every crop into your save. Previously, this silently defeated the 'carry over the old bounds' behavior described above the first time a crop's Map or Game bounds were viewed on that tab.
+- The mod settings' default lower/upper bound fields now stop you from typing in an invalid combination (lower bound above upper bound, or a negative bound), matching how the per-grower and main tab bound entries already behaved.
+- Fixed a possible crash if another mod ever sets a growing zone or plant grower's plant-to-grow to something that isn't actually a plant.
+- The Hysteresis main tab now refreshes its 'Map' bounds list if you switch maps while it's still open, instead of continuing to show and edit the map you had open when the tab was opened.
+- The Hysteresis main tab's crop search box now matches regardless of capitalization on RimWorld 1.3-1.5, matching how it already worked on 1.6. Previously, typing e.g. 'Rice' with a capital letter wouldn't find anything on those versions.
+
 ## [0.9.2] - 2025-07-20
 
 ### Fixed
@@ -162,7 +224,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - First implementation of the mod.
 
-[Unreleased]: https://github.com/ilyvion/farming-hysteresis/compare/v0.9.2...HEAD
+[Unreleased]: https://github.com/ilyvion/farming-hysteresis/compare/v0.12.0...HEAD
+[0.12.0]: https://github.com/ilyvion/farming-hysteresis/compare/v0.11.0..v0.12.0
+[0.11.0]: https://github.com/ilyvion/farming-hysteresis/compare/v0.10.0..v0.11.0
+[0.10.0]: https://github.com/ilyvion/farming-hysteresis/compare/v0.9.2..v0.10.0
 [0.9.2]: https://github.com/ilyvion/farming-hysteresis/compare/v0.9.1...v0.9.2
 [0.9.1]: https://github.com/ilyvion/farming-hysteresis/compare/v0.9.0...v0.9.1
 [0.9.0]: https://github.com/ilyvion/farming-hysteresis/compare/v0.8.2...v0.9.0

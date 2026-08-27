@@ -1,0 +1,28 @@
+<Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+        <RootNamespace>FarmingHysteresis.SmartFarming</RootNamespace>
+        <AssemblyName>FarmingHysteresis.SmartFarming</AssemblyName>
+    </PropertyGroup>
+
+    <PropertyGroup>
+        <OutputPath>../../Integrations/SmartFarming/$(RimWorldVersion)/Assemblies</OutputPath>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <!-- CalculateAverages is private; publicizing it lets the Harmony patch below target it
+             via nameof instead of a bare string literal. -->
+        <Publicize Include="SmartFarming:SmartFarming.MapComponent_SmartFarming.CalculateAverages" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\FarmingHysteresis\FarmingHysteresis.csproj">
+            <CopyLocal>False</CopyLocal>
+            <Private>false</Private>
+        </ProjectReference>
+        <Reference Include="SmartFarming">
+            <HintPath>$(RimWorldSteamWorkshopFolderPath)\3220129183\$(RimWorldVersion)\Assemblies\SmartFarming.dll</HintPath>
+            <CopyLocal>False</CopyLocal>
+            <Private>false</Private>
+        </Reference>
+    </ItemGroup>
+</Project>

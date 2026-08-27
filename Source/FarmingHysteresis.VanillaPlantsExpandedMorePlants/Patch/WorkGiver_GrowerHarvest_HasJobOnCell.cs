@@ -1,9 +1,13 @@
 using FarmingHysteresis.Extensions;
+using FarmingHysteresis.Patch;
 using VanillaPlantsExpandedMorePlants;
 
 namespace FarmingHysteresis.VanillaPlantsExpandedMorePlants.Patch;
 
-[HarmonyPatch(typeof(WorkGiver_GrowerHarvestAquatic), nameof(WorkGiver_GrowerHarvestAquatic.HasJobOnCell))]
+[HarmonyPatch(
+    typeof(WorkGiver_GrowerHarvestAquatic),
+    nameof(WorkGiver_GrowerHarvestAquatic.HasJobOnCell)
+)]
 internal static class WorkGiver_GrowerHarvestAquatic_HasJobOnCell
 {
     private static void Postfix(ref Pawn pawn, ref IntVec3 c, ref bool __result)
@@ -15,13 +19,21 @@ internal static class WorkGiver_GrowerHarvestAquatic_HasJobOnCell
             // allowed, override it with what the hysteresis value is at any given time.
             if (c.GetZone(pawn.Map) is Zone_GrowingAquatic zoneGrowingAquatic)
             {
-                __result = zoneGrowingAquatic.GetAllowHarvest();
+                var data = zoneGrowingAquatic.GetFarmingHysteresisData();
+                __result = WorkGiver_GrowerHarvest_HasJobOnCell.ComputeResult(
+                    __result,
+                    data.Enabled,
+                    zoneGrowingAquatic.GetAllowHarvest()
+                );
             }
         }
     }
 }
 
-[HarmonyPatch(typeof(WorkGiver_GrowerHarvestSandy), nameof(WorkGiver_GrowerHarvestSandy.HasJobOnCell))]
+[HarmonyPatch(
+    typeof(WorkGiver_GrowerHarvestSandy),
+    nameof(WorkGiver_GrowerHarvestSandy.HasJobOnCell)
+)]
 internal static class WorkGiver_GrowerHarvestSandy_HasJobOnCell
 {
     private static void Postfix(ref Pawn pawn, ref IntVec3 c, ref bool __result)
@@ -33,7 +45,12 @@ internal static class WorkGiver_GrowerHarvestSandy_HasJobOnCell
             // allowed, override it with what the hysteresis value is at any given time.
             if (c.GetZone(pawn.Map) is Zone_GrowingSandy zoneGrowingSandy)
             {
-                __result = zoneGrowingSandy.GetAllowHarvest();
+                var data = zoneGrowingSandy.GetFarmingHysteresisData();
+                __result = WorkGiver_GrowerHarvest_HasJobOnCell.ComputeResult(
+                    __result,
+                    data.Enabled,
+                    zoneGrowingSandy.GetAllowHarvest()
+                );
             }
         }
     }

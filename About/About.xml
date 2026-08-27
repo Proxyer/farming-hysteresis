@@ -9,9 +9,19 @@
 
         &lt;size=24&gt;Operation&lt;/size&gt;
 
-        The mod adds an "Enable farming hysteresis" to all supported growing zones and hydroponics basins. Only plants that produce a harvestable product are supported. When you enable this setting, the "Allow sowing" button is removed, and sowing and harvesting are instead controlled by a set of hysteresis bounds. Hydroponics basins typically don't have these settings, but with this mod and hysteresis enabled, sowing and/or cutting also stops on those when appropriate.
-
         When the amount of stored product goes below the lower bound, sowing and/or cutting is enabled. This remains enabled until the amount of stored product goes above the upper bound, at which point sowing and/or cutting is disabled. This then remains disabled until the amount of stored product once again goes below the lower bound.
+
+        &lt;size=24&gt;Colony Manager Redux integration (recommended)&lt;/size&gt;
+
+        The recommended way to use this mod is alongside Colony Manager Redux (CMR). With CMR installed, hysteresis is managed through a CMR manager job instead of being configured grower-by-grower: a job covers a chosen area/zone selection and shows up right in CMR's own manager tab, like any other job. This is where ongoing development is focused, and it unlocks some extra features over the legacy controls below: crop rotation (grow crop A until its threshold is met, then automatically move on to crop B, and so on, cycling back around), tracking a different item than what's grown (e.g. sow hops based on beer stock, not hop stock), a history graph of tracked stock against the bounds over time, and support for dual-crop plants (e.g. from Vanilla Expanded Framework) that let you track the secondary product instead of, or alongside, the primary one.
+
+        CMR is not required, however - everything below continues to work exactly as it always has if you don't install CMR, or don't turn this on for a given save.
+
+        &lt;size=24&gt;Legacy per-grower controls&lt;/size&gt;
+
+        Without CMR (or with CMR-managed hysteresis turned off), the mod adds an "Enable farming hysteresis" toggle to all supported growing zones and hydroponics basins. Only plants that produce a harvestable product are supported. When you enable this setting, the "Allow sowing" button is removed, and sowing and harvesting are instead controlled by the hysteresis bounds described above, editable per-grower. Hydroponics basins typically don't have these settings, but with this mod and hysteresis enabled, sowing and/or cutting also stops on those when appropriate.
+
+        This mode still works and isn't going away, but it's no longer where new features are added - see the section above.
     </description>
     <supportedVersions>
         <li>1.3</li>
@@ -19,19 +29,19 @@
         <li>1.5</li>
         <li>1.6</li>
     </supportedVersions>
-    <modVersion IgnoreIfNoMatchingField="True">0.9.2</modVersion>
+    <modVersion IgnoreIfNoMatchingField="True">0.12.0</modVersion>
     <modDependencies>
         <li>
             <packageId>brrainz.harmony</packageId>
             <displayName>Harmony</displayName>
-            <downloadUrl>https://steamcommunity.com/workshop/filedetails/?id=2009463077</downloadUrl>
+            <downloadUrl>https://github.com/pardeike/HarmonyRimWorld/releases/latest</downloadUrl>
             <steamWorkshopUrl>steam://url/CommunityFilePage/2009463077</steamWorkshopUrl>
         </li>
         <li>
             <packageId>ilyvion.Laboratory</packageId>
             <displayName>ilyvion's Laboratory</displayName>
-            <downloadUrl>https://example.com/</downloadUrl>
-            <!-- <steamWorkshopUrl>steam://url/CommunityFilePage/0</steamWorkshopUrl> -->
+            <downloadUrl>https://github.com/ilyvion/ilyvion-laboratory/releases/latest</downloadUrl>
+            <steamWorkshopUrl>steam://url/CommunityFilePage/3296362231</steamWorkshopUrl>
         </li>
     </modDependencies>
     <loadAfter>
@@ -39,5 +49,11 @@
         <li>ilyvion.Laboratory</li>
         <!-- Sowing/harvesting control only works correctly if we're after Smart Farming -->
         <li>Owlchemist.SmartFarming</li>
+        <!-- The Colony Manager Redux integration subclasses its ManagerJob/ManagerSettings/
+             ManagerTab, so its assembly must load after CMR's -->
+        <li>ilyvion.colonymanagerredux</li>
+        <!-- The Vanilla Expanded Framework dual-crop integration references VEF's
+             DualCropExtension type, so its assembly must load after VEF's -->
+        <li>OskarPotocki.VanillaFactionsExpanded.Core</li>
     </loadAfter>
 </ModMetaData>

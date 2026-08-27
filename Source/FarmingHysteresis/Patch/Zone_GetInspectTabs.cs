@@ -10,27 +10,24 @@ namespace FarmingHysteresis.Patch;
 [HarmonyPatch(typeof(Zone), nameof(Zone.GetInspectTabs))]
 internal static class Zone_GetInspectTabs
 {
-    private static readonly ITab[] ITabs =
-    [
-        new ITab_Hysteresis()
-    ];
+    private static readonly ITab[] ITabs = [new ITab_Hysteresis()];
 
-    private static IEnumerable<InspectTabBase> Postfix(IEnumerable<InspectTabBase> values, Zone __instance)
-    {
-        if (__instance is not Zone_Growing)
-        {
-            return values;
-        }
+    private static IEnumerable<InspectTabBase> Postfix(
+        IEnumerable<InspectTabBase> values,
+        Zone __instance
+    ) => ComputeInspectTabs(__instance is Zone_Growing, values, ITabs)!;
 
-        if (values == null)
-        {
-            values = ITabs;
-        }
-        else
-        {
-            values = values.Concat(ITabs);
-        }
-
-        return values;
-    }
+    /// <summary>
+    /// Pure decision logic behind the postfix: whether/how to append <paramref
+    /// name="extraTabs"/> onto <paramref name="values"/>. Generic over a placeholder type so
+    /// it's testable without live <see cref="InspectTabBase"/> instances.
+    /// </summary>
+    internal static IEnumerable<T>? ComputeInspectTabs<T>(
+        bool isControlledZoneType,
+        IEnumerable<T>? values,
+        IReadOnlyList<T> extraTabs
+    ) =>
+        !isControlledZoneType ? values
+        : values == null ? extraTabs
+        : values.Concat(extraTabs);
 }

@@ -14,12 +14,26 @@ internal static class WorkGiver_GrowerHarvest_HasJobOnCell
             // allowed, override it with what the hysteresis value is at any given time.
             if (c.GetFirstBuilding(pawn.Map) is Building_PlantGrower buildingPlantGrower)
             {
-                __result = buildingPlantGrower.GetAllowHarvest();
+                var data = buildingPlantGrower.GetFarmingHysteresisData();
+                var allowHarvest = buildingPlantGrower.GetAllowHarvest();
+                __result = ComputeResult(__result, data.Enabled, allowHarvest);
             }
             else if (c.GetZone(pawn.Map) is Zone_Growing zoneGrowing)
             {
-                __result = zoneGrowing.GetAllowHarvest();
+                var data = zoneGrowing.GetFarmingHysteresisData();
+                var allowHarvest = zoneGrowing.GetAllowHarvest();
+                __result = ComputeResult(__result, data.Enabled, allowHarvest);
             }
         }
     }
+
+    /// <summary>
+    /// Pure decision logic behind the postfix's grower-found branch. A grower whose
+    /// hysteresis is disabled (<paramref name="enabled"/> false) must leave
+    /// <paramref name="originalResult"/> untouched rather than applying its persisted
+    /// <paramref name="allowHarvest"/> flag, so harvesting doesn't stay stuck blocked after
+    /// the latch was disabled while <paramref name="allowHarvest"/> happened to be false.
+    /// </summary>
+    internal static bool ComputeResult(bool originalResult, bool enabled, bool allowHarvest) =>
+        enabled ? allowHarvest : originalResult;
 }

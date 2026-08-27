@@ -1,9 +1,9 @@
-using FarmingHysteresis.Defs;
-using FarmingHysteresis.Extensions;
-
 namespace FarmingHysteresis;
 
-internal class GlobalThingDefBoundValueAccessor(FarmingHysteresisMapComponent mapComponent, ThingDef thingDef) : IBoundedValueAccessor
+internal class MapThingDefBoundValueAccessor(
+    FarmingHysteresisMapComponent mapComponent,
+    ThingDef thingDef
+) : IBoundedValueAccessor
 {
     private readonly FarmingHysteresisMapComponent mapComponent = mapComponent;
     private readonly ThingDef thingDef = thingDef;
@@ -12,7 +12,7 @@ internal class GlobalThingDefBoundValueAccessor(FarmingHysteresisMapComponent ma
     {
         get
         {
-            if (mapComponent.GlobalBoundValues.TryGetValue(thingDef, out var value))
+            if (mapComponent.MapBoundValues.TryGetValue(thingDef, out var value))
             {
                 return value;
             }
@@ -21,22 +21,36 @@ internal class GlobalThingDefBoundValueAccessor(FarmingHysteresisMapComponent ma
                 var boundValues = new BoundValues
                 {
                     Upper = FarmingHysteresisMod.Settings.DefaultHysteresisUpperBound,
-                    Lower = FarmingHysteresisMod.Settings.DefaultHysteresisLowerBound
+                    Lower = FarmingHysteresisMod.Settings.DefaultHysteresisLowerBound,
                 };
-                mapComponent.GlobalBoundValues.Add(thingDef, boundValues);
+                mapComponent.MapBoundValues.Add(thingDef, boundValues);
                 return boundValues;
             }
         }
     }
+
+    public BoundValues PeekBoundValue() =>
+        BoundValuesLookup.Peek(
+            mapComponent.MapBoundValues,
+            thingDef,
+            FarmingHysteresisMod.Settings.DefaultHysteresisLowerBound,
+            FarmingHysteresisMod.Settings.DefaultHysteresisUpperBound
+        );
+
+    public void CommitBoundValue(BoundValues value) =>
+        BoundValuesLookup.Commit(mapComponent.MapBoundValues, thingDef, value);
 }
 
+/// <summary>
+/// Tracks per-map hysteresis bounds and periodically re-evaluates plant growers that use them.
+/// </summary>
 public class FarmingHysteresisMapComponent : MapComponent, ILoadReferenceable
 {
     private int id = -1;
 
     private Dictionary<ThingDef, BoundValues>? globalBoundValues;
 
-    internal Dictionary<ThingDef, BoundValues> GlobalBoundValues
+    internal Dictionary<ThingDef, BoundValues> MapBoundValues
     {
         get
         {
@@ -45,7 +59,12 @@ public class FarmingHysteresisMapComponent : MapComponent, ILoadReferenceable
         }
     }
 
-    public FarmingHysteresisMapComponent(Map map) : base(map)
+    /// <summary>
+    /// Initializes a new instance of the <see cref="FarmingHysteresisMapComponent"/> class.
+    /// </summary>
+    /// <param name="map">The map this component belongs to.</param>
+    public FarmingHysteresisMapComponent(Map map)
+        : base(map)
     {
         if (map == null)
         {
@@ -59,20 +78,37 @@ public class FarmingHysteresisMapComponent : MapComponent, ILoadReferenceable
         }
     }
 
-    internal bool HasBoundsFor(ThingDef harvestedThingDef)
+    /// <inheritdoc/>
+    public override void FinalizeInit()
     {
-        if (globalBoundValues == null)
-        {
-            return false;
-        }
-        return globalBoundValues.ContainsKey(harvestedThingDef);
+        base.FinalizeInit();
+
+        // Saves from before this component existed have no "id" node, so ExposeData's
+        // forceSave leaves it at -1 forever unless we fix it up here.
+        id = ResolveLoadedId(id, map.uniqueID);
     }
 
-    public string GetUniqueLoadID()
-    {
-        return "FarmingHysteresisMapComponent_" + id;
-    }
+    /// <summary>
+    /// Given the <paramref name="loadedId"/> read from a save and the <paramref name="mapUniqueId"/>
+    /// of the map the component belongs to, returns the id the component should use going forward.
+    /// </summary>
+    internal static int ResolveLoadedId(int loadedId, int mapUniqueId) =>
+        loadedId == -1 ? mapUniqueId : loadedId;
 
+    internal bool HasBoundsFor(ThingDef harvestedThingDef) =>
+        BoundValuesLookup.HasBounds(globalBoundValues, harvestedThingDef);
+
+    internal IBoundedValueAccessor GetMapBoundedValueAccessorFor(ThingDef thingDef) =>
+        new MapThingDefBoundValueAccessor(this, thingDef);
+
+    /// <inheritdoc/>
+    public string GetUniqueLoadID() => "FarmingHysteresisMapComponent_" + id;
+
+    /// <summary>
+    /// Gets the <see cref="FarmingHysteresisMapComponent"/> for the given <paramref name="map"/>,
+    /// creating and attaching one if it doesn't already exist.
+    /// </summary>
+    /// <param name="map">The map to get the component for.</param>
     public static FarmingHysteresisMapComponent For(Map map)
     {
         if (map == null)
@@ -82,42 +118,42 @@ public class FarmingHysteresisMapComponent : MapComponent, ILoadReferenceable
 
         var instance = map.GetComponent<FarmingHysteresisMapComponent>();
         if (instance != null)
+        {
             return instance;
+        }
 
         instance = new FarmingHysteresisMapComponent(map);
         map.components.Add(instance);
         return instance;
     }
 
-    internal IBoundedValueAccessor GetGlobalBoundedValueAccessorFor(ThingDef thingDef)
-    {
-        return new GlobalThingDefBoundValueAccessor(this, thingDef);
-    }
-
+    /// <inheritdoc/>
     public override void MapComponentTick()
     {
         base.MapComponentTick();
 
         // No need to make these checks every single tick; once every 6 in-game minutes (4.16 seconds real time) should be enough.
-        if (Find.TickManager.TicksGame % 250 != 0) return;
-
-        foreach (var plantGrower in DefDatabase<FarmingHysteresisControlDef>.AllDefs.SelectMany(d => d.Worker.GetControlledPlantGrowers(map)))
+        if (Find.TickManager.TicksGame % 250 != 0)
         {
-            var data = plantGrower.GetFarmingHysteresisData();
-            if (data.Enabled)
-            {
-                data.UpdateLatchModeAndHandling(plantGrower);
-            }
+            return;
         }
+
+        FarmingHysteresisMod.HysteresisController.Tick(map);
     }
 
+    /// <inheritdoc/>
     public override void ExposeData()
     {
         base.ExposeData();
         Scribe_Values.Look(ref id, "id", -1, true);
-        Scribe_Collections.Look(ref globalBoundValues, "globalBoundValues", LookMode.Def, LookMode.Deep);
+        Scribe_Collections.Look(
+            ref globalBoundValues,
+            "globalBoundValues",
+            LookMode.Def,
+            LookMode.Deep
+        );
 
-#if v1_3 || v1_4
+#if !v1_5_OR_GREATER
         if (globalBoundValues == null || globalBoundValues.Count == 0)
         {
             if (Scribe.mode == LoadSaveMode.LoadingVars)
@@ -130,12 +166,24 @@ public class FarmingHysteresisMapComponent : MapComponent, ILoadReferenceable
         {
             Dictionary<ThingDef, int> globalLowerBoundValues = [];
             Dictionary<ThingDef, int> globalUpperBoundValues = [];
-            Scribe_Collections.Look(ref globalLowerBoundValues, "globalLowerBoundValues", LookMode.Def, LookMode.Value);
-            Scribe_Collections.Look(ref globalUpperBoundValues, "globalUpperBoundValues", LookMode.Def, LookMode.Value);
+            Scribe_Collections.Look(
+                ref globalLowerBoundValues,
+                "globalLowerBoundValues",
+                LookMode.Def,
+                LookMode.Value
+            );
+            Scribe_Collections.Look(
+                ref globalUpperBoundValues,
+                "globalUpperBoundValues",
+                LookMode.Def,
+                LookMode.Value
+            );
 
             if (globalLowerBoundValues == null || globalUpperBoundValues == null)
             {
-                FarmingHysteresisMod.Instance.LogWarning("globalLowerBoundValues or globalUpperBoundValues was null; expected a value. No bounds transferred from old game.");
+                FarmingHysteresisMod.Instance.LogWarning(
+                    "globalLowerBoundValues or globalUpperBoundValues was null; expected a value. No bounds transferred from old game."
+                );
                 return;
             }
 
@@ -144,7 +192,7 @@ public class FarmingHysteresisMapComponent : MapComponent, ILoadReferenceable
                 var boundValues = new BoundValues
                 {
                     Upper = FarmingHysteresisMod.Settings.DefaultHysteresisUpperBound,
-                    Lower = FarmingHysteresisMod.Settings.DefaultHysteresisLowerBound
+                    Lower = FarmingHysteresisMod.Settings.DefaultHysteresisLowerBound,
                 };
                 {
                     if (globalLowerBoundValues.TryGetValue(thingDef, out var value))
@@ -158,7 +206,7 @@ public class FarmingHysteresisMapComponent : MapComponent, ILoadReferenceable
                         boundValues.Upper = value;
                     }
                 }
-                GlobalBoundValues.Add(thingDef, boundValues);
+                MapBoundValues.Add(thingDef, boundValues);
             }
         }
 #endif
